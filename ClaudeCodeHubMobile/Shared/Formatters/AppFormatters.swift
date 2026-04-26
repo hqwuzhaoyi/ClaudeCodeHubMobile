@@ -85,6 +85,24 @@ enum AppFormatters {
         return currency.string(from: NSNumber(value: value)) ?? number(value)
     }
 
+    static func duration(milliseconds: Int?) -> String {
+        guard let milliseconds else { return "—" }
+        if milliseconds < 1_000 { return "\(milliseconds) ms" }
+        let seconds = Double(milliseconds) / 1_000
+        if seconds < 60 { return String(format: "%.1f s", seconds) }
+        let minutes = Int(seconds / 60)
+        let remainingSeconds = Int(seconds.truncatingRemainder(dividingBy: 60))
+        if minutes < 60 { return "\(minutes)m \(remainingSeconds)s" }
+        let hours = minutes / 60
+        let remainingMinutes = minutes % 60
+        return "\(hours)h \(remainingMinutes)m"
+    }
+
+    static func percent(_ value: Double?) -> String {
+        guard let value else { return "—" }
+        return String(format: "%.1f%%", value)
+    }
+
     static func dateTime(_ date: Date?, timeZone: TimeZone? = nil) -> String {
         guard let date else { return "—" }
         let formatter = DateFormatter()

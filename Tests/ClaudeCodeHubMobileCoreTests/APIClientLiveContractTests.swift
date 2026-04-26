@@ -122,10 +122,58 @@ final class APIClientLiveContractTests: XCTestCase {
 
         XCTAssertEqual(MockURLProtocol.lastRequest?.url?.path, "/api/actions/usage-logs/getUsageLogs")
         XCTAssertEqual(response.records.first?.id, "7")
+        XCTAssertEqual(response.records.first?.sessionId, "session-1")
+        XCTAssertEqual(response.records.first?.userName, "codex")
+        XCTAssertEqual(response.records.first?.keyName, "default")
+        XCTAssertEqual(response.records.first?.providerName, "Right Code Codex")
         XCTAssertEqual(response.records.first?.endpoint, "chat")
         XCTAssertEqual(response.records.first?.cost, 50.393444)
+        XCTAssertEqual(response.records.first?.cacheReadInputTokens, 36115584)
         XCTAssertEqual(response.records.first?.totalTokens, 37157355)
         XCTAssertEqual(response.total, 321173)
+    }
+
+    func testActiveSessionsUseDashboardMonitoringActionAndDecodeSessionAggregates() async throws {
+        let client = makeClient(responseBody: """
+        {
+          "ok": true,
+          "data": [
+            {
+              "sessionId": "019dca40-578b-7763-8784-0db9b80b3411",
+              "userName": "codex",
+              "userId": 2,
+              "keyId": 2,
+              "keyName": "default",
+              "providerId": 4,
+              "providerName": "88 Codex, Right Code Codex, 词元流动_Share",
+              "model": "gpt-5.5",
+              "apiType": "chat",
+              "startTime": 1777223145725,
+              "inputTokens": 1112,
+              "outputTokens": 482,
+              "cacheCreationInputTokens": 0,
+              "cacheReadInputTokens": 64896,
+              "totalTokens": 66490,
+              "costUsd": "0.104936000000000",
+              "status": "in_progress",
+              "durationMs": 8292,
+              "requestCount": 6,
+              "concurrentCount": 1
+            }
+          ]
+        }
+        """)
+
+        let sessions = try await client.getActiveSessions()
+
+        XCTAssertEqual(MockURLProtocol.lastRequest?.url?.path, "/api/actions/active-sessions/getActiveSessions")
+        XCTAssertEqual(sessions.count, 1)
+        XCTAssertEqual(sessions.first?.sessionId, "019dca40-578b-7763-8784-0db9b80b3411")
+        XCTAssertEqual(sessions.first?.startTime, Date(timeIntervalSince1970: 1777223145.725))
+        XCTAssertEqual(sessions.first?.providerName, "88 Codex, Right Code Codex, 词元流动_Share")
+        XCTAssertEqual(sessions.first?.cost, 0.104936)
+        XCTAssertEqual(sessions.first?.cacheReadInputTokens, 64896)
+        XCTAssertEqual(sessions.first?.isLive, true)
     }
 
     private func makeClient(responseBody: String, statusCode: Int = 200) -> APIClient {

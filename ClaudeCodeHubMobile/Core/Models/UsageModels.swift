@@ -118,14 +118,33 @@ struct StatsSummary: Decodable, Equatable {
     let totalCost: Double?
     let totalTokens: Int?
     let rangeLabel: String?
+    let concurrentSessions: Int?
+    let avgResponseTimeMs: Int?
+    let todayErrorRate: Double?
+    let recentMinuteRequests: Int?
     let topModels: [BreakdownItem]
     let topEndpoints: [BreakdownItem]
 
-    init(totalRequests: Int? = nil, totalCost: Double? = nil, totalTokens: Int? = nil, rangeLabel: String? = nil, topModels: [BreakdownItem] = [], topEndpoints: [BreakdownItem] = []) {
+    init(
+        totalRequests: Int? = nil,
+        totalCost: Double? = nil,
+        totalTokens: Int? = nil,
+        rangeLabel: String? = nil,
+        concurrentSessions: Int? = nil,
+        avgResponseTimeMs: Int? = nil,
+        todayErrorRate: Double? = nil,
+        recentMinuteRequests: Int? = nil,
+        topModels: [BreakdownItem] = [],
+        topEndpoints: [BreakdownItem] = []
+    ) {
         self.totalRequests = totalRequests
         self.totalCost = totalCost
         self.totalTokens = totalTokens
         self.rangeLabel = rangeLabel
+        self.concurrentSessions = concurrentSessions
+        self.avgResponseTimeMs = avgResponseTimeMs
+        self.todayErrorRate = todayErrorRate
+        self.recentMinuteRequests = recentMinuteRequests
         self.topModels = topModels
         self.topEndpoints = topEndpoints
     }
@@ -136,6 +155,10 @@ struct StatsSummary: Decodable, Equatable {
         totalCost = container.decodeDouble(forPossibleKeys: ["totalCost", "cost", "amount", "spent", "todayCost"])
         totalTokens = container.decodeInt(forPossibleKeys: ["totalTokens", "tokens", "tokenCount"])
         rangeLabel = container.decodeString(forPossibleKeys: ["range", "rangeLabel", "period", "window"]) ?? (container.contains(DynamicCodingKey(stringValue: "todayRequests")!) ? "Today" : nil)
+        concurrentSessions = container.decodeInt(forPossibleKeys: ["concurrentSessions", "concurrent", "activeSessions"])
+        avgResponseTimeMs = container.decodeInt(forPossibleKeys: ["avgResponseTime", "avgResponseTimeMs", "averageResponseTimeMs"])
+        todayErrorRate = container.decodeDouble(forPossibleKeys: ["todayErrorRate", "errorRate"])
+        recentMinuteRequests = container.decodeInt(forPossibleKeys: ["recentMinuteRequests", "rpm", "requestsPerMinute"])
         topModels = StatsSummary.decodeBreakdown(from: container, keys: ["topModels", "models", "modelBreakdown", "byModel", "keyModelBreakdown", "userModelBreakdown"])
         topEndpoints = StatsSummary.decodeBreakdown(from: container, keys: ["topEndpoints", "endpoints", "endpointBreakdown", "byEndpoint"])
     }
@@ -256,6 +279,12 @@ struct UsageLogsResponse: Decodable, Equatable {
 struct UsageLog: Decodable, Equatable, Identifiable {
     let id: String
     let timestamp: Date?
+    let sessionId: String?
+    let requestSequence: Int?
+    let userName: String?
+    let keyName: String?
+    let providerName: String?
+    let originalModel: String?
     let model: String?
     let endpoint: String?
     let status: String?
@@ -263,7 +292,12 @@ struct UsageLog: Decodable, Equatable, Identifiable {
     let cost: Double?
     let inputTokens: Int?
     let outputTokens: Int?
+    let cacheCreationInputTokens: Int?
+    let cacheReadInputTokens: Int?
     let totalTokens: Int?
+    let durationMs: Int?
+    let ttfbMs: Int?
+    let errorMessage: String?
 
     var displayStatus: String {
         if let status, !status.isEmpty { return status }
@@ -288,9 +322,37 @@ struct UsageLog: Decodable, Equatable, Identifiable {
         return "unknown"
     }
 
-    init(id: String = UUID().uuidString, timestamp: Date? = nil, model: String? = nil, endpoint: String? = nil, status: String? = nil, statusCode: Int? = nil, cost: Double? = nil, inputTokens: Int? = nil, outputTokens: Int? = nil, totalTokens: Int? = nil) {
+    init(
+        id: String = UUID().uuidString,
+        timestamp: Date? = nil,
+        sessionId: String? = nil,
+        requestSequence: Int? = nil,
+        userName: String? = nil,
+        keyName: String? = nil,
+        providerName: String? = nil,
+        originalModel: String? = nil,
+        model: String? = nil,
+        endpoint: String? = nil,
+        status: String? = nil,
+        statusCode: Int? = nil,
+        cost: Double? = nil,
+        inputTokens: Int? = nil,
+        outputTokens: Int? = nil,
+        cacheCreationInputTokens: Int? = nil,
+        cacheReadInputTokens: Int? = nil,
+        totalTokens: Int? = nil,
+        durationMs: Int? = nil,
+        ttfbMs: Int? = nil,
+        errorMessage: String? = nil
+    ) {
         self.id = id
         self.timestamp = timestamp
+        self.sessionId = sessionId
+        self.requestSequence = requestSequence
+        self.userName = userName
+        self.keyName = keyName
+        self.providerName = providerName
+        self.originalModel = originalModel
         self.model = model
         self.endpoint = endpoint
         self.status = status
@@ -298,7 +360,12 @@ struct UsageLog: Decodable, Equatable, Identifiable {
         self.cost = cost
         self.inputTokens = inputTokens
         self.outputTokens = outputTokens
+        self.cacheCreationInputTokens = cacheCreationInputTokens
+        self.cacheReadInputTokens = cacheReadInputTokens
         self.totalTokens = totalTokens
+        self.durationMs = durationMs
+        self.ttfbMs = ttfbMs
+        self.errorMessage = errorMessage
     }
 
     init(from decoder: Decoder) throws {
@@ -309,6 +376,12 @@ struct UsageLog: Decodable, Equatable, Identifiable {
         let container = try decoder.container(keyedBy: DynamicCodingKey.self)
         id = container.decodeString(forPossibleKeys: ["id", "requestId", "logId", "uuid"]) ?? UUID().uuidString
         timestamp = container.decodeDate(forPossibleKeys: ["timestamp", "createdAt", "created_at", "time", "date"], timeZone: serverTimeZone)
+        sessionId = container.decodeString(forPossibleKeys: ["sessionId", "session_id"])
+        requestSequence = container.decodeInt(forPossibleKeys: ["requestSequence", "sequence", "seq"])
+        userName = container.decodeString(forPossibleKeys: ["userName", "username", "user"])
+        keyName = container.decodeString(forPossibleKeys: ["keyName", "accessKeyName", "tokenName"])
+        providerName = container.decodeString(forPossibleKeys: ["providerName", "provider"])
+        originalModel = container.decodeString(forPossibleKeys: ["originalModel", "requestedModel"])
         model = container.decodeString(forPossibleKeys: ["model", "modelName", "model_name"])
         endpoint = container.decodeString(forPossibleKeys: ["endpoint", "path", "route", "api", "url", "apiType"])
         status = container.decodeString(forPossibleKeys: ["status", "state", "result"])
@@ -316,7 +389,72 @@ struct UsageLog: Decodable, Equatable, Identifiable {
         cost = container.decodeDouble(forPossibleKeys: ["cost", "amount", "price", "totalCost", "costUsd"])
         inputTokens = container.decodeInt(forPossibleKeys: ["inputTokens", "promptTokens", "prompt_tokens"])
         outputTokens = container.decodeInt(forPossibleKeys: ["outputTokens", "completionTokens", "completion_tokens"])
+        cacheCreationInputTokens = container.decodeInt(forPossibleKeys: ["cacheCreationInputTokens", "cacheWriteTokens", "cache_creation_input_tokens"])
+        cacheReadInputTokens = container.decodeInt(forPossibleKeys: ["cacheReadInputTokens", "cacheReadTokens", "cache_read_input_tokens"])
         totalTokens = container.decodeInt(forPossibleKeys: ["totalTokens", "tokens", "tokenCount"])
+        durationMs = container.decodeInt(forPossibleKeys: ["durationMs", "duration", "latencyMs"])
+        ttfbMs = container.decodeInt(forPossibleKeys: ["ttfbMs", "timeToFirstByteMs"])
+        errorMessage = container.decodeString(forPossibleKeys: ["errorMessage", "error", "message"])
+    }
+}
+
+struct ActiveSession: Decodable, Equatable, Identifiable {
+    var id: String { sessionId }
+
+    let sessionId: String
+    let userName: String?
+    let userId: Int?
+    let keyId: Int?
+    let keyName: String?
+    let providerId: Int?
+    let providerName: String?
+    let model: String?
+    let apiType: String?
+    let startTime: Date?
+    let inputTokens: Int?
+    let outputTokens: Int?
+    let cacheCreationInputTokens: Int?
+    let cacheReadInputTokens: Int?
+    let totalTokens: Int?
+    let cost: Double?
+    let status: String?
+    let durationMs: Int?
+    let requestCount: Int?
+    let concurrentCount: Int?
+
+    var isLive: Bool {
+        if let concurrentCount, concurrentCount > 0 { return true }
+        let normalized = status?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() ?? ""
+        return ["in_progress", "running", "active", "streaming", "pending"].contains(normalized)
+    }
+
+    var displayStatus: String {
+        guard let status, !status.isEmpty else { return isLive ? "active" : "unknown" }
+        return status
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DynamicCodingKey.self)
+        sessionId = container.decodeString(forPossibleKeys: ["sessionId", "session_id", "id"]) ?? UUID().uuidString
+        userName = container.decodeString(forPossibleKeys: ["userName", "username", "user"])
+        userId = container.decodeInt(forPossibleKeys: ["userId", "uid"])
+        keyId = container.decodeInt(forPossibleKeys: ["keyId", "accessKeyId"])
+        keyName = container.decodeString(forPossibleKeys: ["keyName", "accessKeyName"])
+        providerId = container.decodeInt(forPossibleKeys: ["providerId"])
+        providerName = container.decodeString(forPossibleKeys: ["providerName", "provider"])
+        model = container.decodeString(forPossibleKeys: ["model", "modelName"])
+        apiType = container.decodeString(forPossibleKeys: ["apiType", "endpoint", "type"])
+        startTime = container.decodeDate(forPossibleKeys: ["startTime", "startedAt", "createdAt"])
+        inputTokens = container.decodeInt(forPossibleKeys: ["inputTokens", "promptTokens"])
+        outputTokens = container.decodeInt(forPossibleKeys: ["outputTokens", "completionTokens"])
+        cacheCreationInputTokens = container.decodeInt(forPossibleKeys: ["cacheCreationInputTokens", "cacheWriteTokens"])
+        cacheReadInputTokens = container.decodeInt(forPossibleKeys: ["cacheReadInputTokens", "cacheReadTokens"])
+        totalTokens = container.decodeInt(forPossibleKeys: ["totalTokens", "tokens"])
+        cost = container.decodeDouble(forPossibleKeys: ["costUsd", "cost", "totalCost"])
+        status = container.decodeString(forPossibleKeys: ["status", "state"])
+        durationMs = container.decodeInt(forPossibleKeys: ["durationMs", "duration"])
+        requestCount = container.decodeInt(forPossibleKeys: ["requestCount", "requests"])
+        concurrentCount = container.decodeInt(forPossibleKeys: ["concurrentCount", "concurrent"])
     }
 }
 

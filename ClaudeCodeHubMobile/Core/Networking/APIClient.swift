@@ -72,6 +72,14 @@ final class APIClient {
         return response.value
     }
 
+    func getActiveSessions() async throws -> [ActiveSession] {
+        let response: FlexibleEnvelope<[ActiveSession]> = try await post(
+            "/api/actions/active-sessions/getActiveSessions",
+            body: EmptyBody()
+        )
+        return response.value
+    }
+
     func getDashboardOverview() async throws -> StatsSummary {
         let response: FlexibleEnvelope<StatsSummary> = try await post("/api/actions/overview/getOverviewData", body: EmptyBody())
         return response.value

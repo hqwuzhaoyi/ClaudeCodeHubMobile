@@ -3,6 +3,8 @@ import Foundation
 @MainActor
 final class LogsViewModel: ObservableObject {
     @Published private(set) var logs: [UsageLog] = []
+    @Published private(set) var activeSessions: [ActiveSession] = []
+    @Published private(set) var adminOverview: StatsSummary?
     @Published private(set) var availableModels: [String] = []
     @Published private(set) var availableEndpoints: [String] = []
     @Published private(set) var serverTimeZone: String?
@@ -12,6 +14,7 @@ final class LogsViewModel: ObservableObject {
     @Published var selectedModel = "All"
     @Published var selectedEndpoint = "All"
     @Published var selectedStatus = "All"
+    @Published var autoRefreshEnabled = true
     @Published var errorMessage: String?
 
     private let sessionStore: SessionStore
@@ -29,6 +32,8 @@ final class LogsViewModel: ObservableObject {
     var modelOptions: [String] { ["All"] + availableModels }
     var endpointOptions: [String] { ["All"] + availableEndpoints }
     var resolvedTimeZone: TimeZone? { AppFormatters.resolvedTimeZone(serverTimeZone) }
+    var isAdmin: Bool { sessionStore.isAdmin }
+    var visibleActiveSessions: [ActiveSession] { Array(activeSessions.prefix(5)) }
 
     var filteredLogs: [UsageLog] {
         logs.filter { log in
@@ -44,14 +49,31 @@ final class LogsViewModel: ObservableObject {
     }
 
     func refresh() async {
+        await refresh(showsLoading: true)
+    }
+
+    func refreshSilently() async {
+        await refresh(showsLoading: false)
+    }
+
+    func autoRefreshLoop() async {
+        guard isAdmin else { return }
+        while !Task.isCancelled {
+            try? await Task.sleep(nanoseconds: 5_000_000_000)
+            guard autoRefreshEnabled, !Task.isCancelled else { continue }
+            await refreshSilently()
+        }
+    }
+
+    private func refresh(showsLoading: Bool) async {
         guard let client = sessionStore.client else {
             errorMessage = APIError.missingSession.message
             return
         }
-        isLoading = true
+        if showsLoading { isLoading = true }
         errorMessage = nil
         defer {
-            isLoading = false
+            if showsLoading { isLoading = false }
             hasLoaded = true
         }
 
@@ -61,8 +83,12 @@ final class LogsViewModel: ObservableObject {
             if sessionStore.isAdmin {
                 async let logsRequest = client.getDashboardUsageLogs(limit: pageSize, offset: 0)
                 async let modelsRequest = client.getDashboardAvailableModels()
+                async let activeSessionsRequest = client.getActiveSessions()
+                async let overviewRequest = client.getDashboardOverview()
                 response = try await logsRequest
                 availableModels = try await modelsRequest
+                activeSessions = sortedActiveSessions((try? await activeSessionsRequest) ?? activeSessions)
+                adminOverview = (try? await overviewRequest) ?? adminOverview
                 availableEndpoints = Array(Set(response.records.compactMap(\.endpoint))).sorted()
             } else {
                 async let logsRequest = client.getUsageLogs(limit: pageSize, offset: 0)
@@ -71,6 +97,8 @@ final class LogsViewModel: ObservableObject {
                 response = try await logsRequest
                 availableModels = try await modelsRequest
                 availableEndpoints = try await endpointsRequest
+                activeSessions = []
+                adminOverview = nil
             }
 
             logs = sorted(response.records)
@@ -133,6 +161,13 @@ final class LogsViewModel: ObservableObject {
     private func sorted(_ records: [UsageLog]) -> [UsageLog] {
         records.sorted { left, right in
             (left.timestamp ?? .distantPast) > (right.timestamp ?? .distantPast)
+        }
+    }
+
+    private func sortedActiveSessions(_ records: [ActiveSession]) -> [ActiveSession] {
+        records.sorted { left, right in
+            if left.isLive != right.isLive { return left.isLive && !right.isLive }
+            return (left.startTime ?? .distantPast) > (right.startTime ?? .distantPast)
         }
     }
 

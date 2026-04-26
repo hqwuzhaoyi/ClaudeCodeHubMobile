@@ -18,6 +18,10 @@ struct LogsView: View {
                     .listRowSeparator(.hidden)
                 }
 
+                if viewModel.isAdmin {
+                    AdminMonitoringSection(viewModel: viewModel)
+                }
+
                 Section {
                     Picker("Model", selection: $viewModel.selectedModel) {
                         ForEach(viewModel.modelOptions, id: \.self) { Text($0).tag($0) }
@@ -37,10 +41,17 @@ struct LogsView: View {
                         ContentUnavailableView("No matching usage records", systemImage: "doc.text.magnifyingglass", description: Text(viewModel.hasMorePages ? "Load more pages or clear filters." : "Try refreshing or clearing filters."))
                     } else {
                         ForEach(viewModel.filteredLogs) { log in
-                            UsageLogRow(log: log, timeZone: viewModel.resolvedTimeZone)
-                                .onAppear {
-                                    Task { await viewModel.loadMoreIfNeeded(currentLog: log) }
-                                }
+                            if viewModel.isAdmin {
+                                AdminUsageLogRow(log: log, timeZone: viewModel.resolvedTimeZone)
+                                    .onAppear {
+                                        Task { await viewModel.loadMoreIfNeeded(currentLog: log) }
+                                    }
+                            } else {
+                                UsageLogRow(log: log, timeZone: viewModel.resolvedTimeZone)
+                                    .onAppear {
+                                        Task { await viewModel.loadMoreIfNeeded(currentLog: log) }
+                                    }
+                            }
                         }
                     }
 
@@ -88,6 +99,256 @@ struct LogsView: View {
             .task {
                 await viewModel.loadIfNeeded()
             }
+            .task {
+                await viewModel.autoRefreshLoop()
+            }
+        }
+    }
+}
+
+private struct AdminMonitoringSection: View {
+    @ObservedObject var viewModel: LogsViewModel
+
+    var body: some View {
+        Section {
+            AdminKPIGrid(overview: viewModel.adminOverview, activeSessions: viewModel.activeSessions)
+
+            Toggle(isOn: $viewModel.autoRefreshEnabled) {
+                Label("Auto refresh every 5s", systemImage: viewModel.autoRefreshEnabled ? "dot.radiowaves.left.and.right" : "pause.circle")
+            }
+            .font(.subheadline)
+
+            if viewModel.visibleActiveSessions.isEmpty && !viewModel.isLoading {
+                ContentUnavailableView("No active sessions", systemImage: "bolt.horizontal.circle", description: Text("The dashboard monitors sessions active in the recent window."))
+                    .frame(minHeight: 96)
+            } else {
+                ForEach(viewModel.visibleActiveSessions) { session in
+                    ActiveSessionRow(session: session, timeZone: viewModel.resolvedTimeZone)
+                }
+            }
+        } header: {
+            HStack {
+                Text("Live Monitoring")
+                Spacer()
+                if viewModel.autoRefreshEnabled {
+                    Label("Live", systemImage: "circle.fill")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(.green)
+                }
+            }
+        } footer: {
+            if viewModel.activeSessions.count > viewModel.visibleActiveSessions.count {
+                Text("\(viewModel.visibleActiveSessions.count) of \(viewModel.activeSessions.count) recent sessions shown.")
+            }
+        }
+    }
+}
+
+private struct AdminKPIGrid: View {
+    let overview: StatsSummary?
+    let activeSessions: [ActiveSession]
+
+    var body: some View {
+        Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 12) {
+            GridRow {
+                MonitoringMetric(label: "Concurrent", value: AppFormatters.integer(overview?.concurrentSessions), icon: "person.2.wave.2")
+                MonitoringMetric(label: "RPM", value: AppFormatters.integer(overview?.recentMinuteRequests), icon: "speedometer")
+            }
+            GridRow {
+                MonitoringMetric(label: "Today Cost", value: AppFormatters.money(overview?.totalCost), icon: "creditcard")
+                MonitoringMetric(label: "Recent Sessions", value: AppFormatters.integer(activeSessions.count), icon: "bolt.horizontal")
+            }
+            GridRow {
+                MonitoringMetric(label: "Avg Response", value: AppFormatters.duration(milliseconds: overview?.avgResponseTimeMs), icon: "timer")
+                MonitoringMetric(label: "Error Rate", value: AppFormatters.percent(overview?.todayErrorRate), icon: "exclamationmark.triangle")
+            }
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+private struct MonitoringMetric: View {
+    let label: String
+    let value: String
+    let icon: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: icon)
+                .foregroundStyle(.secondary)
+                .frame(width: 20)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(value)
+                    .font(.headline.monospacedDigit())
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                Text(label)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+
+private struct ActiveSessionRow: View {
+    let session: ActiveSession
+    let timeZone: TimeZone?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .firstTextBaseline) {
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(session.isLive ? Color.green : Color.secondary.opacity(0.45))
+                        .frame(width: 8, height: 8)
+                    Text(session.model ?? "Unknown model")
+                        .font(.headline)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 12)
+                StatusPill(status: session.displayStatus, statusCode: nil)
+            }
+
+            HStack(spacing: 6) {
+                Text(session.userName ?? "Unknown user")
+                Text("·")
+                Text(session.keyName ?? "Unknown key")
+                Text("·")
+                Text(session.apiType ?? "api")
+            }
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+
+            if let providerName = session.providerName {
+                Label(providerName, systemImage: "point.3.connected.trianglepath.dotted")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+
+            HStack(spacing: 12) {
+                Label(AppFormatters.integer(session.requestCount), systemImage: "arrow.left.arrow.right")
+                Label(AppFormatters.money(session.cost), systemImage: "creditcard")
+                Label(AppFormatters.integer(session.totalTokens), systemImage: "number")
+                Label(AppFormatters.duration(milliseconds: session.durationMs), systemImage: "timer")
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+
+            Text(shortSession(session.sessionId, requestSequence: nil))
+                .font(.caption2.monospaced())
+                .foregroundStyle(.tertiary)
+                .lineLimit(1)
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+private struct AdminUsageLogRow: View {
+    let log: UsageLog
+    let timeZone: TimeZone?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(log.model ?? "Unknown model")
+                        .font(.headline)
+                        .lineLimit(1)
+                    if let originalModel = log.originalModel, originalModel != log.model {
+                        Text("requested \(originalModel)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                }
+                Spacer(minLength: 12)
+                StatusPill(status: log.displayStatus, statusCode: log.statusCode)
+            }
+
+            HStack(spacing: 6) {
+                Text(log.userName ?? "Unknown user")
+                Text("·")
+                Text(log.keyName ?? "Unknown key")
+                Text("·")
+                Text(log.endpoint ?? "Unknown endpoint")
+            }
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+
+            if let providerName = log.providerName {
+                Label(providerName, systemImage: "point.3.connected.trianglepath.dotted")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+
+            Grid(alignment: .leading, horizontalSpacing: 14, verticalSpacing: 6) {
+                GridRow {
+                    SmallMetric(label: "Tokens", value: AppFormatters.integer(log.totalTokens), icon: "number")
+                    SmallMetric(label: "Cache", value: AppFormatters.integer(cacheTokens), icon: "externaldrive")
+                }
+                GridRow {
+                    SmallMetric(label: "Cost", value: AppFormatters.money(log.cost), icon: "creditcard")
+                    SmallMetric(label: "Latency", value: AppFormatters.duration(milliseconds: log.durationMs), icon: "timer")
+                }
+            }
+
+            HStack(spacing: 10) {
+                Label(AppFormatters.dateTime(log.timestamp, timeZone: timeZone), systemImage: "clock")
+                if let ttfbMs = log.ttfbMs {
+                    Label("TTFB \(AppFormatters.duration(milliseconds: ttfbMs))", systemImage: "waveform.path.ecg")
+                }
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+
+            if let errorMessage = log.errorMessage, !errorMessage.isEmpty {
+                Label(errorMessage, systemImage: "exclamationmark.triangle")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                    .lineLimit(2)
+            }
+
+            if let sessionId = log.sessionId {
+                Text(shortSession(sessionId, requestSequence: log.requestSequence))
+                    .font(.caption2.monospaced())
+                    .foregroundStyle(.tertiary)
+                    .lineLimit(1)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    private var cacheTokens: Int? {
+        let write = log.cacheCreationInputTokens ?? 0
+        let read = log.cacheReadInputTokens ?? 0
+        let total = write + read
+        return total > 0 ? total : nil
+    }
+}
+
+private struct SmallMetric: View {
+    let label: String
+    let value: String
+    let icon: String
+
+    var body: some View {
+        Label {
+            VStack(alignment: .leading, spacing: 1) {
+                Text(value)
+                    .font(.caption.weight(.semibold).monospacedDigit())
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+                Text(label)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+        } icon: {
+            Image(systemName: icon)
+                .foregroundStyle(.secondary)
         }
     }
 }
@@ -141,4 +402,17 @@ private struct StatusPill: View {
             .background((isSuccess ? Color.green : Color.orange).opacity(0.15), in: Capsule())
             .foregroundStyle(isSuccess ? .green : .orange)
     }
+}
+
+private func shortSession(_ sessionId: String, requestSequence: Int?) -> String {
+    let compactId: String
+    if sessionId.count > 12 {
+        compactId = "\(sessionId.prefix(8))…\(sessionId.suffix(4))"
+    } else {
+        compactId = sessionId
+    }
+    if let requestSequence {
+        return "\(compactId) #\(requestSequence)"
+    }
+    return compactId
 }

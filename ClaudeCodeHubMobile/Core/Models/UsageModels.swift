@@ -1,0 +1,380 @@
+import Foundation
+
+struct LoginResponse: Decodable, Equatable {
+    let user: UserContext?
+    let message: String?
+    let success: Bool?
+    let loginType: String?
+
+    var isAdmin: Bool { loginType == "admin" || user?.role == "admin" }
+
+    init(user: UserContext? = nil, message: String? = nil, success: Bool? = nil, loginType: String? = nil) {
+        self.user = user
+        self.message = message
+        self.success = success
+        self.loginType = loginType
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try? decoder.container(keyedBy: DynamicCodingKey.self)
+        user = try? container?.decode(UserContext.self, forKey: DynamicCodingKey(stringValue: "user")!)
+        message = container?.decodeString(forPossibleKeys: ["message", "msg", "error"])
+        success = container?.decodeBool(forPossibleKeys: ["success", "ok", "authenticated"])
+        loginType = container?.decodeString(forPossibleKeys: ["loginType", "type", "role"])
+    }
+}
+
+struct UserContext: Decodable, Equatable {
+    let id: String?
+    let name: String?
+    let email: String?
+    let keyName: String?
+    let role: String?
+
+    var displayName: String {
+        name ?? email ?? keyName ?? id ?? "Signed-in user"
+    }
+
+    init(id: String? = nil, name: String? = nil, email: String? = nil, keyName: String? = nil, role: String? = nil) {
+        self.id = id
+        self.name = name
+        self.email = email
+        self.keyName = keyName
+        self.role = role
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DynamicCodingKey.self)
+        id = container.decodeString(forPossibleKeys: ["id", "userId", "uid"])
+        name = container.decodeString(forPossibleKeys: ["name", "displayName", "username"])
+        email = container.decodeString(forPossibleKeys: ["email", "mail"])
+        keyName = container.decodeString(forPossibleKeys: ["keyName", "accessKeyName", "tokenName"])
+        role = container.decodeString(forPossibleKeys: ["role", "userRole"])
+    }
+}
+
+struct QuotaSummary: Decodable, Equatable {
+    let status: String?
+    let quota: Double?
+    let remaining: Double?
+    let used: Double?
+    let expiresAt: Date?
+
+    var isActive: Bool? {
+        guard let status else { return nil }
+        let normalized = status.lowercased()
+        if ["active", "enabled", "valid", "ok"].contains(normalized) { return true }
+        if ["inactive", "disabled", "expired", "blocked"].contains(normalized) { return false }
+        return nil
+    }
+
+    init(status: String? = nil, quota: Double? = nil, remaining: Double? = nil, used: Double? = nil, expiresAt: Date? = nil) {
+        self.status = status
+        self.quota = quota
+        self.remaining = remaining
+        self.used = used
+        self.expiresAt = expiresAt
+    }
+
+    init(from decoder: Decoder) throws {
+        try self.init(from: decoder, serverTimeZone: nil)
+    }
+
+    init(from decoder: Decoder, serverTimeZone: TimeZone?) throws {
+        let container = try decoder.container(keyedBy: DynamicCodingKey.self)
+        let keyIsEnabled = container.decodeBool(forPossibleKeys: ["keyIsEnabled"])
+        let userIsEnabled = container.decodeBool(forPossibleKeys: ["userIsEnabled"])
+        if let explicitStatus = container.decodeString(forPossibleKeys: ["status", "state", "accountStatus"]) {
+            status = explicitStatus
+        } else if keyIsEnabled == false || userIsEnabled == false {
+            status = "disabled"
+        } else if keyIsEnabled == true || userIsEnabled == true {
+            status = "active"
+        } else {
+            status = nil
+        }
+
+        quota = container.decodeDouble(forPossibleKeys: [
+            "quota", "totalQuota", "limit", "balance", "amount",
+            "keyLimitDailyUsd", "userLimitDailyUsd", "keyLimitTotalUsd", "userLimitTotalUsd"
+        ])
+        used = container.decodeDouble(forPossibleKeys: [
+            "used", "usedQuota", "consumed", "usage", "spent",
+            "keyCurrentDailyUsd", "userCurrentDailyUsd", "keyCurrentTotalUsd", "userCurrentTotalUsd"
+        ])
+        if let explicitRemaining = container.decodeDouble(forPossibleKeys: ["remaining", "remainingQuota", "available", "left", "balanceRemaining"]) {
+            remaining = explicitRemaining
+        } else if let quota, let used {
+            remaining = max(0, quota - used)
+        } else {
+            remaining = nil
+        }
+        expiresAt = container.decodeDate(forPossibleKeys: ["expiresAt", "expireAt", "expiredAt", "expiration", "validUntil", "endTime", "keyExpiresAt", "userExpiresAt"], timeZone: serverTimeZone)
+    }
+}
+
+struct StatsSummary: Decodable, Equatable {
+    let totalRequests: Int?
+    let totalCost: Double?
+    let totalTokens: Int?
+    let rangeLabel: String?
+    let topModels: [BreakdownItem]
+    let topEndpoints: [BreakdownItem]
+
+    init(totalRequests: Int? = nil, totalCost: Double? = nil, totalTokens: Int? = nil, rangeLabel: String? = nil, topModels: [BreakdownItem] = [], topEndpoints: [BreakdownItem] = []) {
+        self.totalRequests = totalRequests
+        self.totalCost = totalCost
+        self.totalTokens = totalTokens
+        self.rangeLabel = rangeLabel
+        self.topModels = topModels
+        self.topEndpoints = topEndpoints
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DynamicCodingKey.self)
+        totalRequests = container.decodeInt(forPossibleKeys: ["totalRequests", "requests", "requestCount", "count", "todayRequests"])
+        totalCost = container.decodeDouble(forPossibleKeys: ["totalCost", "cost", "amount", "spent", "todayCost"])
+        totalTokens = container.decodeInt(forPossibleKeys: ["totalTokens", "tokens", "tokenCount"])
+        rangeLabel = container.decodeString(forPossibleKeys: ["range", "rangeLabel", "period", "window"]) ?? (container.contains(DynamicCodingKey(stringValue: "todayRequests")!) ? "Today" : nil)
+        topModels = StatsSummary.decodeBreakdown(from: container, keys: ["topModels", "models", "modelBreakdown", "byModel", "keyModelBreakdown", "userModelBreakdown"])
+        topEndpoints = StatsSummary.decodeBreakdown(from: container, keys: ["topEndpoints", "endpoints", "endpointBreakdown", "byEndpoint"])
+    }
+
+    private static func decodeBreakdown(from container: KeyedDecodingContainer<DynamicCodingKey>, keys: [String]) -> [BreakdownItem] {
+        for key in keys {
+            guard let codingKey = DynamicCodingKey(stringValue: key) else { continue }
+            if let items = try? container.decode([BreakdownItem].self, forKey: codingKey) {
+                return items
+            }
+            if let dictionary = try? container.decode([String: Double].self, forKey: codingKey) {
+                return dictionary.map { BreakdownItem(label: $0.key, value: $0.value, count: nil) }
+                    .sorted { ($0.value ?? 0) > ($1.value ?? 0) }
+            }
+            if let dictionary = try? container.decode([String: Int].self, forKey: codingKey) {
+                return dictionary.map { BreakdownItem(label: $0.key, value: nil, count: $0.value) }
+                    .sorted { ($0.count ?? 0) > ($1.count ?? 0) }
+            }
+        }
+        return []
+    }
+}
+
+struct BreakdownItem: Decodable, Equatable, Identifiable {
+    var id: String { label }
+    let label: String
+    let value: Double?
+    let count: Int?
+
+    init(label: String, value: Double? = nil, count: Int? = nil) {
+        self.label = label
+        self.value = value
+        self.count = count
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DynamicCodingKey.self)
+        label = container.decodeString(forPossibleKeys: ["label", "name", "model", "endpoint", "key", "path"]) ?? "Unknown"
+        value = container.decodeDouble(forPossibleKeys: ["value", "cost", "amount", "usage", "costUsd"])
+        count = container.decodeInt(forPossibleKeys: ["count", "requests", "requestCount", "total", "calls"])
+    }
+}
+
+struct UsageLogsCursor: Codable, Equatable {
+    let createdAt: String?
+    let id: Int?
+    let rawValue: String?
+
+    init(createdAt: String? = nil, id: Int? = nil, rawValue: String? = nil) {
+        self.createdAt = createdAt
+        self.id = id
+        self.rawValue = rawValue
+    }
+
+    init(from decoder: Decoder) throws {
+        if let raw = try? String(from: decoder) {
+            createdAt = nil
+            id = nil
+            rawValue = raw
+            return
+        }
+        let container = try decoder.container(keyedBy: DynamicCodingKey.self)
+        createdAt = container.decodeString(forPossibleKeys: ["createdAt", "created_at", "timestamp", "time"])
+        id = container.decodeInt(forPossibleKeys: ["id", "logId"])
+        rawValue = nil
+    }
+
+    func encode(to encoder: Encoder) throws {
+        if let rawValue, createdAt == nil, id == nil {
+            var container = encoder.singleValueContainer()
+            try container.encode(rawValue)
+            return
+        }
+        var container = encoder.container(keyedBy: DynamicCodingKey.self)
+        try container.encodeIfPresent(createdAt, forKey: DynamicCodingKey(stringValue: "createdAt")!)
+        try container.encodeIfPresent(id, forKey: DynamicCodingKey(stringValue: "id")!)
+    }
+}
+
+struct UsageLogsResponse: Decodable, Equatable {
+    let records: [UsageLog]
+    let total: Int?
+    let nextCursor: UsageLogsCursor?
+    let hasMore: Bool?
+
+    init(records: [UsageLog] = [], total: Int? = nil, nextCursor: UsageLogsCursor? = nil, hasMore: Bool? = nil) {
+        self.records = records
+        self.total = total
+        self.nextCursor = nextCursor
+        self.hasMore = hasMore
+    }
+
+    init(from decoder: Decoder) throws {
+        if let records = try? [UsageLog](from: decoder) {
+            self.records = records
+            self.total = records.count
+            self.nextCursor = nil
+            self.hasMore = nil
+            return
+        }
+
+        let container = try decoder.container(keyedBy: DynamicCodingKey.self)
+        var decodedRecords: [UsageLog] = []
+        for key in ["logs", "records", "items", "rows", "data", "list"] {
+            guard let codingKey = DynamicCodingKey(stringValue: key) else { continue }
+            if let records = try? container.decode([UsageLog].self, forKey: codingKey) {
+                decodedRecords = records
+                break
+            }
+        }
+        records = decodedRecords
+        total = container.decodeInt(forPossibleKeys: ["total", "totalCount", "count"])
+        nextCursor = container.decodeCursor(forPossibleKeys: ["nextCursor", "cursor", "next", "nextPageToken"])
+        hasMore = container.decodeBool(forPossibleKeys: ["hasMore", "hasNext", "more", "canLoadMore"])
+    }
+}
+
+struct UsageLog: Decodable, Equatable, Identifiable {
+    let id: String
+    let timestamp: Date?
+    let model: String?
+    let endpoint: String?
+    let status: String?
+    let statusCode: Int?
+    let cost: Double?
+    let inputTokens: Int?
+    let outputTokens: Int?
+    let totalTokens: Int?
+
+    var displayStatus: String {
+        if let status, !status.isEmpty { return status }
+        if let statusCode { return (200..<400).contains(statusCode) ? "success" : "failed" }
+        return "unknown"
+    }
+
+    var statusCategory: String {
+        if let statusCode { return (200..<400).contains(statusCode) ? "success" : "failed" }
+        guard let status else { return "unknown" }
+        let normalized = status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if normalized.isEmpty { return "unknown" }
+        if ["success", "succeeded", "ok", "complete", "completed", "done"].contains(normalized) || normalized.hasPrefix("2") {
+            return "success"
+        }
+        if ["failed", "failure", "error", "timeout", "timed_out", "denied", "rejected", "blocked", "unauthorized", "forbidden", "invalid", "cancelled", "canceled"].contains(normalized) {
+            return "failed"
+        }
+        if normalized.contains("error") || normalized.contains("fail") || normalized.contains("timeout") || normalized.contains("denied") {
+            return "failed"
+        }
+        return "unknown"
+    }
+
+    init(id: String = UUID().uuidString, timestamp: Date? = nil, model: String? = nil, endpoint: String? = nil, status: String? = nil, statusCode: Int? = nil, cost: Double? = nil, inputTokens: Int? = nil, outputTokens: Int? = nil, totalTokens: Int? = nil) {
+        self.id = id
+        self.timestamp = timestamp
+        self.model = model
+        self.endpoint = endpoint
+        self.status = status
+        self.statusCode = statusCode
+        self.cost = cost
+        self.inputTokens = inputTokens
+        self.outputTokens = outputTokens
+        self.totalTokens = totalTokens
+    }
+
+    init(from decoder: Decoder) throws {
+        try self.init(from: decoder, serverTimeZone: nil)
+    }
+
+    init(from decoder: Decoder, serverTimeZone: TimeZone?) throws {
+        let container = try decoder.container(keyedBy: DynamicCodingKey.self)
+        id = container.decodeString(forPossibleKeys: ["id", "requestId", "logId", "uuid"]) ?? UUID().uuidString
+        timestamp = container.decodeDate(forPossibleKeys: ["timestamp", "createdAt", "created_at", "time", "date"], timeZone: serverTimeZone)
+        model = container.decodeString(forPossibleKeys: ["model", "modelName", "model_name"])
+        endpoint = container.decodeString(forPossibleKeys: ["endpoint", "path", "route", "api", "url", "apiType"])
+        status = container.decodeString(forPossibleKeys: ["status", "state", "result"])
+        statusCode = container.decodeInt(forPossibleKeys: ["statusCode", "code", "httpStatus"])
+        cost = container.decodeDouble(forPossibleKeys: ["cost", "amount", "price", "totalCost", "costUsd"])
+        inputTokens = container.decodeInt(forPossibleKeys: ["inputTokens", "promptTokens", "prompt_tokens"])
+        outputTokens = container.decodeInt(forPossibleKeys: ["outputTokens", "completionTokens", "completion_tokens"])
+        totalTokens = container.decodeInt(forPossibleKeys: ["totalTokens", "tokens", "tokenCount"])
+    }
+}
+
+struct StringListResponse: Decodable, Equatable {
+    let values: [String]
+
+    init(values: [String]) {
+        self.values = values
+    }
+
+    init(from decoder: Decoder) throws {
+        if let strings = try? [String](from: decoder) {
+            values = strings.sorted()
+            return
+        }
+        if let objects = try? [NamedValue](from: decoder) {
+            values = objects.compactMap(\.name).sorted()
+            return
+        }
+
+        let container = try decoder.container(keyedBy: DynamicCodingKey.self)
+        for key in ["items", "models", "endpoints", "data", "values", "list"] {
+            guard let codingKey = DynamicCodingKey(stringValue: key) else { continue }
+            if let strings = try? container.decode([String].self, forKey: codingKey) {
+                values = strings.sorted()
+                return
+            }
+            if let objects = try? container.decode([NamedValue].self, forKey: codingKey) {
+                values = objects.compactMap(\.name).sorted()
+                return
+            }
+        }
+        values = []
+    }
+}
+
+private struct NamedValue: Decodable, Equatable {
+    let name: String?
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DynamicCodingKey.self)
+        name = container.decodeString(forPossibleKeys: ["name", "id", "model", "endpoint", "path", "value"])
+    }
+}
+
+struct ServerTimeZoneResponse: Decodable, Equatable {
+    let identifier: String?
+
+    init(identifier: String?) {
+        self.identifier = identifier
+    }
+
+    init(from decoder: Decoder) throws {
+        if let string = try? String(from: decoder) {
+            identifier = string
+            return
+        }
+        let container = try decoder.container(keyedBy: DynamicCodingKey.self)
+        identifier = container.decodeString(forPossibleKeys: ["timezone", "timeZone", "timeZoneId", "zone", "identifier"])
+    }
+}

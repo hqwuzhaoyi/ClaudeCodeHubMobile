@@ -1,0 +1,336 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A10000010000000000000001 /* ClaudeCodeHubMobileApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000010000000000000011 /* ClaudeCodeHubMobileApp.swift */; };
+		A10000010000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000010000000000000012 /* ContentView.swift */; };
+		B10000010000000000000001 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000010000000000000101 /* RootView.swift */; };
+		B10000010000000000000002 /* APIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000010000000000000102 /* APIError.swift */; };
+		B10000010000000000000003 /* AnyJSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000010000000000000103 /* AnyJSON.swift */; };
+		B10000010000000000000004 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000010000000000000104 /* APIClient.swift */; };
+		B10000010000000000000005 /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000010000000000000105 /* SessionStore.swift */; };
+		B10000010000000000000006 /* UsageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000010000000000000106 /* UsageModels.swift */; };
+		B10000010000000000000007 /* AppFormatters.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000010000000000000107 /* AppFormatters.swift */; };
+		B10000010000000000000008 /* LoginViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000010000000000000108 /* LoginViewModel.swift */; };
+		B10000010000000000000009 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000010000000000000109 /* LoginView.swift */; };
+		B1000001000000000000000A /* OverviewViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000001000000000000010A /* OverviewViewModel.swift */; };
+		B1000001000000000000000B /* OverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000001000000000000010B /* OverviewView.swift */; };
+		B1000001000000000000000C /* LogsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000001000000000000010C /* LogsViewModel.swift */; };
+		B1000001000000000000000D /* LogsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000001000000000000010D /* LogsView.swift */; };
+		B1000001000000000000000E /* SharedViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000001000000000000010E /* SharedViews.swift */; };
+		B1000001000000000000000F /* AccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000001000000000000010F /* AccountView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A10000010000000000000010 /* ClaudeCodeHubMobile.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClaudeCodeHubMobile.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000010000000000000011 /* ClaudeCodeHubMobileApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeCodeHubMobileApp.swift; sourceTree = "<group>"; };
+		A10000010000000000000012 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		B10000010000000000000101 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/RootView.swift; sourceTree = "<group>"; };
+		B10000010000000000000102 /* APIError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/Networking/APIError.swift; sourceTree = "<group>"; };
+		B10000010000000000000103 /* AnyJSON.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/Networking/AnyJSON.swift; sourceTree = "<group>"; };
+		B10000010000000000000104 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/Networking/APIClient.swift; sourceTree = "<group>"; };
+		B10000010000000000000105 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/Session/SessionStore.swift; sourceTree = "<group>"; };
+		B10000010000000000000106 /* UsageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/Models/UsageModels.swift; sourceTree = "<group>"; };
+		B10000010000000000000107 /* AppFormatters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared/Formatters/AppFormatters.swift; sourceTree = "<group>"; };
+		B10000010000000000000108 /* LoginViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Login/LoginViewModel.swift; sourceTree = "<group>"; };
+		B10000010000000000000109 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Login/LoginView.swift; sourceTree = "<group>"; };
+		B1000001000000000000010A /* OverviewViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Overview/OverviewViewModel.swift; sourceTree = "<group>"; };
+		B1000001000000000000010B /* OverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Overview/OverviewView.swift; sourceTree = "<group>"; };
+		B1000001000000000000010C /* LogsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Logs/LogsViewModel.swift; sourceTree = "<group>"; };
+		B1000001000000000000010D /* LogsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Logs/LogsView.swift; sourceTree = "<group>"; };
+		B1000001000000000000010E /* SharedViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared/SharedViews.swift; sourceTree = "<group>"; };
+		B1000001000000000000010F /* AccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Account/AccountView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A10000010000000000000020 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A10000010000000000000030 = {
+			isa = PBXGroup;
+			children = (
+				A10000010000000000000031 /* ClaudeCodeHubMobile */,
+				A10000010000000000000032 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A10000010000000000000031 /* ClaudeCodeHubMobile */ = {
+			isa = PBXGroup;
+			children = (
+				A10000010000000000000011 /* ClaudeCodeHubMobileApp.swift */,
+				A10000010000000000000012 /* ContentView.swift */,
+				B10000010000000000000101 /* RootView.swift */,
+				B10000010000000000000102 /* APIError.swift */,
+				B10000010000000000000103 /* AnyJSON.swift */,
+				B10000010000000000000104 /* APIClient.swift */,
+				B10000010000000000000105 /* SessionStore.swift */,
+				B10000010000000000000106 /* UsageModels.swift */,
+				B10000010000000000000107 /* AppFormatters.swift */,
+				B10000010000000000000108 /* LoginViewModel.swift */,
+				B10000010000000000000109 /* LoginView.swift */,
+				B1000001000000000000010A /* OverviewViewModel.swift */,
+				B1000001000000000000010B /* OverviewView.swift */,
+				B1000001000000000000010C /* LogsViewModel.swift */,
+				B1000001000000000000010D /* LogsView.swift */,
+				B1000001000000000000010E /* SharedViews.swift */,
+				B1000001000000000000010F /* AccountView.swift */,
+			);
+			path = ClaudeCodeHubMobile;
+			sourceTree = "<group>";
+		};
+		A10000010000000000000032 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A10000010000000000000010 /* ClaudeCodeHubMobile.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A10000010000000000000040 /* ClaudeCodeHubMobile */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A10000010000000000000050 /* Build configuration list for PBXNativeTarget "ClaudeCodeHubMobile" */;
+			buildPhases = (
+				A10000010000000000000021 /* Sources */,
+				A10000010000000000000020 /* Frameworks */,
+				A10000010000000000000022 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ClaudeCodeHubMobile;
+			productName = ClaudeCodeHubMobile;
+			productReference = A10000010000000000000010 /* ClaudeCodeHubMobile.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A10000010000000000000060 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2640;
+				LastUpgradeCheck = 2640;
+				TargetAttributes = {
+					A10000010000000000000040 = {
+						CreatedOnToolsVersion = 26.4;
+					};
+				};
+			};
+			buildConfigurationList = A10000010000000000000061 /* Build configuration list for PBXProject "ClaudeCodeHubMobile" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A10000010000000000000030;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = A10000010000000000000032 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A10000010000000000000040 /* ClaudeCodeHubMobile */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A10000010000000000000022 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A10000010000000000000021 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000010000000000000001 /* ClaudeCodeHubMobileApp.swift in Sources */,
+				A10000010000000000000002 /* ContentView.swift in Sources */,
+				B10000010000000000000001 /* RootView.swift in Sources */,
+				B10000010000000000000002 /* APIError.swift in Sources */,
+				B10000010000000000000003 /* AnyJSON.swift in Sources */,
+				B10000010000000000000004 /* APIClient.swift in Sources */,
+				B10000010000000000000005 /* SessionStore.swift in Sources */,
+				B10000010000000000000006 /* UsageModels.swift in Sources */,
+				B10000010000000000000007 /* AppFormatters.swift in Sources */,
+				B10000010000000000000008 /* LoginViewModel.swift in Sources */,
+				B10000010000000000000009 /* LoginView.swift in Sources */,
+				B1000001000000000000000A /* OverviewViewModel.swift in Sources */,
+				B1000001000000000000000B /* OverviewView.swift in Sources */,
+				B1000001000000000000000C /* LogsViewModel.swift in Sources */,
+				B1000001000000000000000D /* LogsView.swift in Sources */,
+				B1000001000000000000000E /* SharedViews.swift in Sources */,
+				B1000001000000000000000F /* AccountView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A10000010000000000000070 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		A10000010000000000000071 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		A10000010000000000000072 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"ClaudeCodeHubMobile/Preview Content\"";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.claudecodehub.mobile;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A10000010000000000000073 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"ClaudeCodeHubMobile/Preview Content\"";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.claudecodehub.mobile;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A10000010000000000000050 /* Build configuration list for PBXNativeTarget "ClaudeCodeHubMobile" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A10000010000000000000072 /* Debug */,
+				A10000010000000000000073 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A10000010000000000000061 /* Build configuration list for PBXProject "ClaudeCodeHubMobile" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A10000010000000000000070 /* Debug */,
+				A10000010000000000000071 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A10000010000000000000060 /* Project object */;
+}
+

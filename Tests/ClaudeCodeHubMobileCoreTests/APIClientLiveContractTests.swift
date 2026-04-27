@@ -79,6 +79,62 @@ final class APIClientLiveContractTests: XCTestCase {
         XCTAssertEqual(AppFormatters.serverTimeZone?.identifier, "Asia/Shanghai")
     }
 
+    func testDashboardOverviewDecodesHomeBentoComparisonMetrics() async throws {
+        let client = makeClient(responseBody: """
+        {
+          "ok": true,
+          "data": {
+            "concurrentSessions": 4,
+            "todayRequests": 3880,
+            "todayCost": 1019.096797,
+            "avgResponseTime": 15054,
+            "todayErrorRate": 15.26,
+            "yesterdaySamePeriodRequests": 4430,
+            "yesterdaySamePeriodCost": 587.104931,
+            "yesterdaySamePeriodAvgResponseTime": 11446,
+            "recentMinuteRequests": 5
+          }
+        }
+        """)
+
+        let overview = try await client.getDashboardOverview()
+
+        XCTAssertEqual(MockURLProtocol.lastRequest?.url?.path, "/api/actions/overview/getOverviewData")
+        XCTAssertEqual(overview.concurrentSessions, 4)
+        XCTAssertEqual(overview.totalRequests, 3880)
+        XCTAssertEqual(overview.totalCost, 1019.096797)
+        XCTAssertEqual(overview.avgResponseTimeMs, 15054)
+        XCTAssertEqual(overview.todayErrorRate, 15.26)
+        XCTAssertEqual(overview.yesterdaySamePeriodRequests, 4430)
+        XCTAssertEqual(overview.yesterdaySamePeriodCost, 587.104931)
+        XCTAssertEqual(overview.yesterdaySamePeriodAvgResponseTimeMs, 11446)
+        XCTAssertEqual(overview.recentMinuteRequests, 5)
+    }
+
+    func testDashboardLeaderboardUsesWebHomeEndpointAndDecodesScopes() async throws {
+        let client = makeClient(responseBody: """
+        [
+          {
+            "userId": 2,
+            "userName": "codex",
+            "totalRequests": 2501,
+            "totalCost": 997.308872,
+            "totalTokens": 872923344
+          }
+        ]
+        """)
+
+        let entries = try await client.getDashboardLeaderboard(scope: .user)
+
+        XCTAssertEqual(MockURLProtocol.lastRequest?.url?.path, "/api/leaderboard")
+        XCTAssertEqual(MockURLProtocol.lastRequest?.url?.query, "period=daily&scope=user")
+        XCTAssertEqual(entries.first?.id, "user-2")
+        XCTAssertEqual(entries.first?.name, "codex")
+        XCTAssertEqual(entries.first?.totalRequests, 2501)
+        XCTAssertEqual(entries.first?.totalCost, 997.308872)
+        XCTAssertEqual(entries.first?.totalTokens, 872923344)
+    }
+
     func testLoginSendsSameOriginFetchMetadataForClaudeCodeHubCsrfGuard() async throws {
         let client = makeClient(responseBody: """
         { "ok": true, "loginType": "admin", "redirectTo": "/dashboard" }

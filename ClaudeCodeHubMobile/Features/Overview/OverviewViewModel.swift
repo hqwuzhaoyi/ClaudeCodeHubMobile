@@ -4,6 +4,10 @@ import Foundation
 final class OverviewViewModel: ObservableObject {
     @Published private(set) var quota: QuotaSummary?
     @Published private(set) var stats: StatsSummary?
+    @Published private(set) var activeSessions: [ActiveSession] = []
+    @Published private(set) var userLeaderboard: [DashboardLeaderboardEntry] = []
+    @Published private(set) var providerLeaderboard: [DashboardLeaderboardEntry] = []
+    @Published private(set) var modelLeaderboard: [DashboardLeaderboardEntry] = []
     @Published private(set) var availableModels: [String] = []
     @Published private(set) var availableEndpoints: [String] = []
     @Published private(set) var serverTimeZone: String?
@@ -14,6 +18,8 @@ final class OverviewViewModel: ObservableObject {
     private var hasLoaded = false
 
     var resolvedTimeZone: TimeZone? { AppFormatters.resolvedTimeZone(serverTimeZone) }
+    var isAdmin: Bool { sessionStore.isAdmin }
+    var visibleActiveSessions: [ActiveSession] { Array(activeSessions.prefix(6)) }
 
     init(sessionStore: SessionStore) {
         self.sessionStore = sessionStore
@@ -40,13 +46,19 @@ final class OverviewViewModel: ObservableObject {
             serverTimeZone = try await client.getServerTimeZone()
             if sessionStore.isAdmin {
                 async let statsRequest = client.getDashboardOverview()
-                async let modelsRequest = client.getDashboardAvailableModels()
-                async let logsRequest = client.getDashboardUsageLogs(limit: 100, offset: 0)
+                async let sessionsRequest = client.getActiveSessions()
+                async let usersRequest = client.getDashboardLeaderboard(scope: .user)
+                async let providersRequest = client.getDashboardLeaderboard(scope: .provider)
+                async let modelsLeaderboardRequest = client.getDashboardLeaderboard(scope: .model)
 
                 quota = QuotaSummary(status: "admin", quota: nil, remaining: nil, used: nil, expiresAt: nil)
                 stats = try await statsRequest
-                availableModels = try await modelsRequest
-                availableEndpoints = Array(Set((try await logsRequest).records.compactMap(\.endpoint))).sorted()
+                activeSessions = sortedActiveSessions((try? await sessionsRequest) ?? [])
+                userLeaderboard = (try? await usersRequest) ?? []
+                providerLeaderboard = (try? await providersRequest) ?? []
+                modelLeaderboard = (try? await modelsLeaderboardRequest) ?? []
+                availableModels = []
+                availableEndpoints = []
             } else {
                 async let quotaRequest = client.getQuota()
                 async let statsRequest = client.getStatsSummary()
@@ -57,10 +69,21 @@ final class OverviewViewModel: ObservableObject {
                 stats = try await statsRequest
                 availableModels = try await modelsRequest
                 availableEndpoints = try await endpointsRequest
+                activeSessions = []
+                userLeaderboard = []
+                providerLeaderboard = []
+                modelLeaderboard = []
             }
         } catch {
             if sessionStore.handleAPIError(error) { return }
             errorMessage = APIError.userMessage(for: error)
+        }
+    }
+
+    private func sortedActiveSessions(_ records: [ActiveSession]) -> [ActiveSession] {
+        records.sorted { left, right in
+            if left.isLive != right.isLive { return left.isLive && !right.isLive }
+            return (left.startTime ?? .distantPast) > (right.startTime ?? .distantPast)
         }
     }
 }

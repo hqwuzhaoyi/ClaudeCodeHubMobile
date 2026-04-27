@@ -85,6 +85,10 @@ final class APIClient {
         return response.value
     }
 
+    func getDashboardLeaderboard(scope: DashboardLeaderboardScope) async throws -> [DashboardLeaderboardEntry] {
+        try await get("/api/leaderboard?period=daily&scope=\(scope.rawValue)")
+    }
+
     func validateSession() async throws {
         _ = try await postData("/api/actions/my-usage/getMyQuota", body: EmptyBody())
     }
@@ -199,11 +203,16 @@ private extension URL {
         while cleanPath.hasPrefix("/") {
             cleanPath.removeFirst()
         }
+        let pathParts = cleanPath.split(separator: "?", maxSplits: 1, omittingEmptySubsequences: false)
+        cleanPath = String(pathParts.first ?? "")
 
         var components = URLComponents(url: self, resolvingAgainstBaseURL: false)
         let basePath = components?.path.trimmingCharacters(in: CharacterSet(charactersIn: "/")) ?? ""
         let joinedPath = ([basePath, cleanPath].filter { !$0.isEmpty }).joined(separator: "/")
         components?.path = "/" + joinedPath
+        if pathParts.count > 1 {
+            components?.percentEncodedQuery = String(pathParts[1])
+        }
         return components?.url ?? appendingPathComponent(cleanPath)
     }
 }

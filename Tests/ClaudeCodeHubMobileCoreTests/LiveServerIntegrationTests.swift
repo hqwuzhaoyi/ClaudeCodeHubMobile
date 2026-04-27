@@ -45,6 +45,9 @@ final class LiveServerIntegrationTests: XCTestCase {
             let activeSessions = try await client.getActiveSessions()
             XCTAssertFalse(activeSessions.isEmpty)
 
+            let userLeaderboard = try await client.getDashboardLeaderboard(scope: .user)
+            XCTAssertFalse(userLeaderboard.isEmpty)
+
             let dashboardModels = try await client.getDashboardAvailableModels()
             XCTAssertFalse(dashboardModels.isEmpty)
         }

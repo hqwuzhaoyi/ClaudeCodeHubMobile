@@ -121,6 +121,9 @@ struct StatsSummary: Decodable, Equatable {
     let concurrentSessions: Int?
     let avgResponseTimeMs: Int?
     let todayErrorRate: Double?
+    let yesterdaySamePeriodRequests: Int?
+    let yesterdaySamePeriodCost: Double?
+    let yesterdaySamePeriodAvgResponseTimeMs: Int?
     let recentMinuteRequests: Int?
     let topModels: [BreakdownItem]
     let topEndpoints: [BreakdownItem]
@@ -133,6 +136,9 @@ struct StatsSummary: Decodable, Equatable {
         concurrentSessions: Int? = nil,
         avgResponseTimeMs: Int? = nil,
         todayErrorRate: Double? = nil,
+        yesterdaySamePeriodRequests: Int? = nil,
+        yesterdaySamePeriodCost: Double? = nil,
+        yesterdaySamePeriodAvgResponseTimeMs: Int? = nil,
         recentMinuteRequests: Int? = nil,
         topModels: [BreakdownItem] = [],
         topEndpoints: [BreakdownItem] = []
@@ -144,6 +150,9 @@ struct StatsSummary: Decodable, Equatable {
         self.concurrentSessions = concurrentSessions
         self.avgResponseTimeMs = avgResponseTimeMs
         self.todayErrorRate = todayErrorRate
+        self.yesterdaySamePeriodRequests = yesterdaySamePeriodRequests
+        self.yesterdaySamePeriodCost = yesterdaySamePeriodCost
+        self.yesterdaySamePeriodAvgResponseTimeMs = yesterdaySamePeriodAvgResponseTimeMs
         self.recentMinuteRequests = recentMinuteRequests
         self.topModels = topModels
         self.topEndpoints = topEndpoints
@@ -158,6 +167,9 @@ struct StatsSummary: Decodable, Equatable {
         concurrentSessions = container.decodeInt(forPossibleKeys: ["concurrentSessions", "concurrent", "activeSessions"])
         avgResponseTimeMs = container.decodeInt(forPossibleKeys: ["avgResponseTime", "avgResponseTimeMs", "averageResponseTimeMs"])
         todayErrorRate = container.decodeDouble(forPossibleKeys: ["todayErrorRate", "errorRate"])
+        yesterdaySamePeriodRequests = container.decodeInt(forPossibleKeys: ["yesterdaySamePeriodRequests", "previousRequests"])
+        yesterdaySamePeriodCost = container.decodeDouble(forPossibleKeys: ["yesterdaySamePeriodCost", "previousCost"])
+        yesterdaySamePeriodAvgResponseTimeMs = container.decodeInt(forPossibleKeys: ["yesterdaySamePeriodAvgResponseTime", "previousAvgResponseTime"])
         recentMinuteRequests = container.decodeInt(forPossibleKeys: ["recentMinuteRequests", "rpm", "requestsPerMinute"])
         topModels = StatsSummary.decodeBreakdown(from: container, keys: ["topModels", "models", "modelBreakdown", "byModel", "keyModelBreakdown", "userModelBreakdown"])
         topEndpoints = StatsSummary.decodeBreakdown(from: container, keys: ["topEndpoints", "endpoints", "endpointBreakdown", "byEndpoint"])
@@ -487,6 +499,38 @@ struct ActiveSession: Decodable, Equatable, Identifiable {
         durationMs = container.decodeInt(forPossibleKeys: ["durationMs", "duration"])
         requestCount = container.decodeInt(forPossibleKeys: ["requestCount", "requests"])
         concurrentCount = container.decodeInt(forPossibleKeys: ["concurrentCount", "concurrent"])
+    }
+}
+
+enum DashboardLeaderboardScope: String {
+    case user
+    case provider
+    case model
+}
+
+struct DashboardLeaderboardEntry: Decodable, Equatable, Identifiable {
+    let id: String
+    let name: String
+    let totalRequests: Int
+    let totalCost: Double
+    let totalTokens: Int
+    let successRate: Double?
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DynamicCodingKey.self)
+        if let userId = container.decodeInt(forPossibleKeys: ["userId"]) {
+            id = "user-\(userId)"
+        } else if let providerId = container.decodeInt(forPossibleKeys: ["providerId"]) {
+            id = "provider-\(providerId)"
+        } else {
+            let model = container.decodeString(forPossibleKeys: ["model"]) ?? UUID().uuidString
+            id = "model-\(model)"
+        }
+        name = container.decodeString(forPossibleKeys: ["userName", "providerName", "model", "name"]) ?? "Unknown"
+        totalRequests = container.decodeInt(forPossibleKeys: ["totalRequests", "requests"]) ?? 0
+        totalCost = container.decodeDouble(forPossibleKeys: ["totalCost", "cost"]) ?? 0
+        totalTokens = container.decodeInt(forPossibleKeys: ["totalTokens", "tokens"]) ?? 0
+        successRate = container.decodeDouble(forPossibleKeys: ["successRate"])
     }
 }
 

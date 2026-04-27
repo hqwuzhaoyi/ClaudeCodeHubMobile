@@ -20,6 +20,7 @@ struct LogsView: View {
 
                 if viewModel.isAdmin {
                     AdminMonitoringSection(viewModel: viewModel)
+                    AdminUsageSearchSection(viewModel: viewModel)
                 }
 
                 Section {
@@ -73,7 +74,7 @@ struct LogsView: View {
                     }
                 } header: {
                     HStack {
-                        Text("Recent Records")
+                        Text(viewModel.hasAdminSearch ? "Search Results" : "Recent Records")
                         Spacer()
                         Text("\(viewModel.filteredLogs.count) shown")
                     }
@@ -105,6 +106,54 @@ struct LogsView: View {
                 await viewModel.autoRefreshLoop()
             }
         }
+    }
+}
+
+private struct AdminUsageSearchSection: View {
+    @ObservedObject var viewModel: LogsViewModel
+    @FocusState private var isSearchFocused: Bool
+
+    var body: some View {
+        Section {
+            HStack(spacing: 10) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(.secondary)
+                TextField("User, key, provider, model, session…", text: $viewModel.adminSearchText)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .focused($isSearchFocused)
+                    .submitLabel(.search)
+                    .onSubmit { submit() }
+
+                if viewModel.hasAdminSearch {
+                    Button {
+                        viewModel.adminSearchText = ""
+                        submit()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Clear search")
+                }
+            }
+
+            Button {
+                submit()
+            } label: {
+                Label("Search usage records", systemImage: "line.3.horizontal.decrease.circle")
+            }
+            .disabled(viewModel.isLoading)
+        } header: {
+            Text("Usage Search")
+        } footer: {
+            Text("Search is sent to the dashboard usage-log API, then model, endpoint, and status filters are applied locally.")
+        }
+    }
+
+    private func submit() {
+        isSearchFocused = false
+        Task { await viewModel.refresh() }
     }
 }
 

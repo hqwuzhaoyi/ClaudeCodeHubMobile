@@ -16,6 +16,7 @@ final class LogsViewModel: ObservableObject {
     @Published var selectedModel = "All"
     @Published var selectedEndpoint = "All"
     @Published var selectedStatus = "All"
+    @Published var adminSearchText = ""
     @Published var autoRefreshEnabled = true
     @Published var errorMessage: String?
 
@@ -37,6 +38,7 @@ final class LogsViewModel: ObservableObject {
     var resolvedTimeZone: TimeZone? { AppFormatters.resolvedTimeZone(serverTimeZone) }
     var isAdmin: Bool { sessionStore.isAdmin }
     var visibleActiveSessions: [ActiveSession] { Array(activeSessions.prefix(5)) }
+    var hasAdminSearch: Bool { !adminSearchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 
     var filteredLogs: [UsageLog] {
         logs.filter { log in
@@ -88,7 +90,7 @@ final class LogsViewModel: ObservableObject {
             serverTimeZone = try await client.getServerTimeZone()
             let response: UsageLogsResponse
             if sessionStore.isAdmin {
-                async let logsRequest = client.getDashboardUsageLogs(limit: pageSize, offset: 0)
+                async let logsRequest = client.getDashboardUsageLogs(limit: pageSize, offset: 0, filter: dashboardFilter())
                 async let modelsRequest = client.getDashboardAvailableModels()
                 async let activeSessionsRequest = client.getActiveSessions()
                 async let overviewRequest = client.getDashboardOverview()
@@ -145,7 +147,7 @@ final class LogsViewModel: ObservableObject {
         do {
             let response: UsageLogsResponse
             if sessionStore.isAdmin {
-                response = try await client.getDashboardUsageLogs(limit: pageSize, offset: nextOffset)
+                response = try await client.getDashboardUsageLogs(limit: pageSize, offset: nextOffset, filter: dashboardFilter())
             } else {
                 response = try await client.getUsageLogs(limit: pageSize, offset: nextOffset, cursor: nextCursor)
             }
@@ -207,5 +209,11 @@ final class LogsViewModel: ObservableObject {
     private func normalizeSelections() {
         if selectedModel != "All", !availableModels.contains(selectedModel) { selectedModel = "All" }
         if selectedEndpoint != "All", !availableEndpoints.contains(selectedEndpoint) { selectedEndpoint = "All" }
+    }
+
+    private func dashboardFilter() -> DashboardUsageLogsFilter? {
+        guard sessionStore.isAdmin else { return nil }
+        let filter = DashboardUsageLogsFilter(search: adminSearchText)
+        return filter.search == nil && filter.userId == nil && filter.providerId == nil && filter.sessionId == nil ? nil : filter
     }
 }

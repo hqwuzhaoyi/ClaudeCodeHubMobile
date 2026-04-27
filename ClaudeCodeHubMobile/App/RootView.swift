@@ -36,6 +36,23 @@ private struct MainTabView: View {
                     Label("Logs", systemImage: "list.bullet.rectangle")
                 }
 
+            if sessionStore.isAdmin {
+                RankingsView(sessionStore: sessionStore)
+                    .tabItem {
+                        Label("Rankings", systemImage: "trophy.fill")
+                    }
+
+                AdminUsersView(sessionStore: sessionStore)
+                    .tabItem {
+                        Label("Users", systemImage: "person.2.fill")
+                    }
+
+                AdminProvidersView(sessionStore: sessionStore)
+                    .tabItem {
+                        Label("Providers", systemImage: "server.rack")
+                    }
+            }
+
             AccountView(sessionStore: sessionStore)
                 .tabItem {
                     Label("Account", systemImage: "person.crop.circle")

@@ -24,6 +24,12 @@
 		B1000001000000000000000D /* Features/Logs/LogsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000001000000000000010D /* Features/Logs/LogsView.swift */; };
 		B1000001000000000000000E /* Shared/SharedViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000001000000000000010E /* Shared/SharedViews.swift */; };
 		B1000001000000000000000F /* Features/Account/AccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000001000000000000010F /* Features/Account/AccountView.swift */; };
+		C10000010000000000000010 /* Features/Rankings/RankingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000010000000000000110 /* Features/Rankings/RankingsViewModel.swift */; };
+		C10000010000000000000011 /* Features/Rankings/RankingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000010000000000000111 /* Features/Rankings/RankingsView.swift */; };
+		C10000010000000000000012 /* Features/Users/AdminUsersViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000010000000000000112 /* Features/Users/AdminUsersViewModel.swift */; };
+		C10000010000000000000013 /* Features/Users/AdminUsersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000010000000000000113 /* Features/Users/AdminUsersView.swift */; };
+		C10000010000000000000014 /* Features/Providers/AdminProvidersViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000010000000000000114 /* Features/Providers/AdminProvidersViewModel.swift */; };
+		C10000010000000000000015 /* Features/Providers/AdminProvidersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10000010000000000000115 /* Features/Providers/AdminProvidersView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -45,6 +51,12 @@
 		B1000001000000000000010D /* Features/Logs/LogsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Logs/LogsView.swift; sourceTree = "<group>"; };
 		B1000001000000000000010E /* Shared/SharedViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared/SharedViews.swift; sourceTree = "<group>"; };
 		B1000001000000000000010F /* Features/Account/AccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Account/AccountView.swift; sourceTree = "<group>"; };
+		C10000010000000000000110 /* Features/Rankings/RankingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Rankings/RankingsViewModel.swift; sourceTree = "<group>"; };
+		C10000010000000000000111 /* Features/Rankings/RankingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Rankings/RankingsView.swift; sourceTree = "<group>"; };
+		C10000010000000000000112 /* Features/Users/AdminUsersViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Users/AdminUsersViewModel.swift; sourceTree = "<group>"; };
+		C10000010000000000000113 /* Features/Users/AdminUsersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Users/AdminUsersView.swift; sourceTree = "<group>"; };
+		C10000010000000000000114 /* Features/Providers/AdminProvidersViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Providers/AdminProvidersViewModel.swift; sourceTree = "<group>"; };
+		C10000010000000000000115 /* Features/Providers/AdminProvidersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Providers/AdminProvidersView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -86,6 +98,12 @@
 				B1000001000000000000010D /* Features/Logs/LogsView.swift */,
 				B1000001000000000000010E /* Shared/SharedViews.swift */,
 				B1000001000000000000010F /* Features/Account/AccountView.swift */,
+				C10000010000000000000110 /* Features/Rankings/RankingsViewModel.swift */,
+				C10000010000000000000111 /* Features/Rankings/RankingsView.swift */,
+				C10000010000000000000112 /* Features/Users/AdminUsersViewModel.swift */,
+				C10000010000000000000113 /* Features/Users/AdminUsersView.swift */,
+				C10000010000000000000114 /* Features/Providers/AdminProvidersViewModel.swift */,
+				C10000010000000000000115 /* Features/Providers/AdminProvidersView.swift */,
 			);
 			path = ClaudeCodeHubMobile;
 			sourceTree = "<group>";
@@ -184,6 +202,12 @@
 				B1000001000000000000000D /* Features/Logs/LogsView.swift in Sources */,
 				B1000001000000000000000E /* Shared/SharedViews.swift in Sources */,
 				B1000001000000000000000F /* Features/Account/AccountView.swift in Sources */,
+				C10000010000000000000010 /* Features/Rankings/RankingsViewModel.swift in Sources */,
+				C10000010000000000000011 /* Features/Rankings/RankingsView.swift in Sources */,
+				C10000010000000000000012 /* Features/Users/AdminUsersViewModel.swift in Sources */,
+				C10000010000000000000013 /* Features/Users/AdminUsersView.swift in Sources */,
+				C10000010000000000000014 /* Features/Providers/AdminProvidersViewModel.swift in Sources */,
+				C10000010000000000000015 /* Features/Providers/AdminProvidersView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

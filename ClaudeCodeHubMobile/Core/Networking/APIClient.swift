@@ -62,12 +62,12 @@ final class APIClient {
         return response.value
     }
 
-    func getDashboardUsageLogs(limit: Int = 100, offset: Int = 0) async throws -> UsageLogsResponse {
+    func getDashboardUsageLogs(limit: Int = 100, offset: Int = 0, filter: DashboardUsageLogsFilter? = nil) async throws -> UsageLogsResponse {
         let pageSize = max(1, min(limit, 100))
         let page = max(1, (offset / pageSize) + 1)
         let response: FlexibleEnvelope<UsageLogsResponse> = try await post(
             "/api/actions/usage-logs/getUsageLogs",
-            body: DashboardUsageLogsRequest(pageSize: pageSize, page: page)
+            body: DashboardUsageLogsRequest(pageSize: pageSize, page: page, filter: filter)
         )
         return response.value
     }
@@ -85,8 +85,31 @@ final class APIClient {
         return response.value
     }
 
-    func getDashboardLeaderboard(scope: DashboardLeaderboardScope) async throws -> [DashboardLeaderboardEntry] {
-        try await get("/api/leaderboard?period=daily&scope=\(scope.rawValue)")
+    func getDashboardLeaderboard(
+        scope: DashboardLeaderboardScope,
+        period: DashboardLeaderboardPeriod = .daily
+    ) async throws -> [DashboardLeaderboardEntry] {
+        var query = "period=\(period.rawValue)&scope=\(scope.rawValue)"
+        if scope == .provider {
+            query += "&includeModelStats=1"
+        }
+        return try await get("/api/leaderboard?\(query)")
+    }
+
+    func getAdminUsers() async throws -> [AdminUser] {
+        let response: FlexibleEnvelope<[AdminUser]> = try await post(
+            "/api/actions/users/getUsers",
+            body: EmptyBody()
+        )
+        return response.value
+    }
+
+    func getAdminProviders() async throws -> [AdminProvider] {
+        let response: FlexibleEnvelope<[AdminProvider]> = try await post(
+            "/api/actions/providers/getProviders",
+            body: EmptyBody()
+        )
+        return response.value
     }
 
     func validateSession() async throws {
@@ -184,6 +207,19 @@ private struct UsageLogsRequest: Encodable {
 private struct DashboardUsageLogsRequest: Encodable {
     let pageSize: Int
     let page: Int
+    let search: String?
+    let userId: Int?
+    let providerId: Int?
+    let sessionId: String?
+
+    init(pageSize: Int, page: Int, filter: DashboardUsageLogsFilter? = nil) {
+        self.pageSize = pageSize
+        self.page = page
+        self.search = filter?.search
+        self.userId = filter?.userId
+        self.providerId = filter?.providerId
+        self.sessionId = filter?.sessionId
+    }
 }
 
 private extension URL {

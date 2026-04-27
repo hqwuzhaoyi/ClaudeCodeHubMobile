@@ -48,8 +48,26 @@ final class LiveServerIntegrationTests: XCTestCase {
             let userLeaderboard = try await client.getDashboardLeaderboard(scope: .user)
             XCTAssertFalse(userLeaderboard.isEmpty)
 
+            let providerLeaderboard = try await client.getDashboardLeaderboard(scope: .provider, period: .daily)
+            XCTAssertFalse(providerLeaderboard.isEmpty)
+
+            let modelLeaderboard = try await client.getDashboardLeaderboard(scope: .model, period: .daily)
+            XCTAssertFalse(modelLeaderboard.isEmpty)
+
             let dashboardModels = try await client.getDashboardAvailableModels()
             XCTAssertFalse(dashboardModels.isEmpty)
+
+            let searchedLogs = try await client.getDashboardUsageLogs(
+                limit: 3,
+                filter: DashboardUsageLogsFilter(search: "codex")
+            )
+            XCTAssertNotNil(searchedLogs.total)
+
+            let users = try await client.getAdminUsers()
+            XCTAssertFalse(users.isEmpty)
+
+            let providers = try await client.getAdminProviders()
+            XCTAssertFalse(providers.isEmpty)
         }
     }
 }

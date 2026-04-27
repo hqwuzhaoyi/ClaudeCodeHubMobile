@@ -135,6 +135,131 @@ final class APIClientLiveContractTests: XCTestCase {
         XCTAssertEqual(entries.first?.totalTokens, 872923344)
     }
 
+    func testDashboardUsageSearchSendsSearchAndFilterBody() async throws {
+        let client = makeClient(responseBody: """
+        {
+          "ok": true,
+          "data": {
+            "logs": [],
+            "total": 0
+          }
+        }
+        """)
+
+        _ = try await client.getDashboardUsageLogs(
+            limit: 25,
+            offset: 50,
+            filter: DashboardUsageLogsFilter(search: "codex", userId: 2, providerId: 98)
+        )
+
+        let body = try XCTUnwrap(decodedRequestBody())
+        XCTAssertEqual(body["pageSize"] as? Int, 25)
+        XCTAssertEqual(body["page"] as? Int, 3)
+        XCTAssertEqual(body["search"] as? String, "codex")
+        XCTAssertEqual(body["userId"] as? Int, 2)
+        XCTAssertEqual(body["providerId"] as? Int, 98)
+    }
+
+    func testDashboardLeaderboardSupportsPeriodAndProviderModelStats() async throws {
+        let client = makeClient(responseBody: """
+        [
+          {
+            "providerId": 98,
+            "providerName": "词元流动_Share",
+            "totalRequests": 1569,
+            "totalCost": 850.547855,
+            "totalTokens": 870562709,
+            "successRate": 99.5,
+            "modelStats": [
+              { "model": "gpt-5.5", "totalRequests": 1000, "totalCost": 120.5, "totalTokens": 12345 }
+            ]
+          }
+        ]
+        """)
+
+        let entries = try await client.getDashboardLeaderboard(scope: .provider, period: .weekly)
+
+        XCTAssertEqual(MockURLProtocol.lastRequest?.url?.path, "/api/leaderboard")
+        XCTAssertEqual(MockURLProtocol.lastRequest?.url?.query, "period=weekly&scope=provider&includeModelStats=1")
+        XCTAssertEqual(entries.first?.id, "provider-98")
+        XCTAssertEqual(entries.first?.successRate, 99.5)
+        XCTAssertEqual(entries.first?.modelStats.first?.name, "gpt-5.5")
+    }
+
+    func testAdminUsersDecodeUserAndKeyManagementShape() async throws {
+        let client = makeClient(responseBody: """
+        {
+          "ok": true,
+          "data": [
+            {
+              "id": 2,
+              "name": "codex",
+              "role": "user",
+              "providerGroup": "codex",
+              "isEnabled": true,
+              "todayUsage": 1008.024591,
+              "todayTokens": 880698866,
+              "keys": [
+                {
+                  "id": 2,
+                  "name": "default",
+                  "maskedKey": "sk-b••••••9222",
+                  "status": "enabled",
+                  "todayUsage": 1008.024591,
+                  "todayTokens": 880698866,
+                  "todayCallCount": 2563,
+                  "lastProviderName": "词元流动_Share"
+                }
+              ]
+            }
+          ]
+        }
+        """)
+
+        let users = try await client.getAdminUsers()
+
+        XCTAssertEqual(MockURLProtocol.lastRequest?.url?.path, "/api/actions/users/getUsers")
+        XCTAssertEqual(users.first?.id, 2)
+        XCTAssertEqual(users.first?.name, "codex")
+        XCTAssertEqual(users.first?.isEnabled, true)
+        XCTAssertEqual(users.first?.keys.first?.maskedKey, "sk-b••••••9222")
+        XCTAssertEqual(users.first?.keys.first?.todayCallCount, 2563)
+    }
+
+    func testAdminProvidersDecodeProviderManagementShape() async throws {
+        let client = makeClient(responseBody: """
+        {
+          "ok": true,
+          "data": [
+            {
+              "id": 98,
+              "name": "词元流动_Share",
+              "url": "https://tokenflux.dev/",
+              "maskedKey": "sk-••••",
+              "isEnabled": true,
+              "weight": 1,
+              "priority": 0,
+              "groupTag": "codex,share",
+              "providerType": "codex",
+              "costMultiplier": 1,
+              "todayTotalCostUsd": 850.547855,
+              "todayCallCount": 1569,
+              "lastCallModel": "gpt-5.5"
+            }
+          ]
+        }
+        """)
+
+        let providers = try await client.getAdminProviders()
+
+        XCTAssertEqual(MockURLProtocol.lastRequest?.url?.path, "/api/actions/providers/getProviders")
+        XCTAssertEqual(providers.first?.id, 98)
+        XCTAssertEqual(providers.first?.name, "词元流动_Share")
+        XCTAssertEqual(providers.first?.isEnabled, true)
+        XCTAssertEqual(providers.first?.todayCallCount, 1569)
+        XCTAssertEqual(providers.first?.lastCallModel, "gpt-5.5")
+    }
+
     func testLoginSendsSameOriginFetchMetadataForClaudeCodeHubCsrfGuard() async throws {
         let client = makeClient(responseBody: """
         { "ok": true, "loginType": "admin", "redirectTo": "/dashboard" }
@@ -266,17 +391,24 @@ final class APIClientLiveContractTests: XCTestCase {
         let session = URLSession(configuration: configuration)
         return APIClient(baseURL: URL(string: "https://cch.example.com")!, session: session)
     }
+
+    private func decodedRequestBody() throws -> [String: Any]? {
+        guard let data = MockURLProtocol.lastRequestBody else { return nil }
+        return try JSONSerialization.jsonObject(with: data) as? [String: Any]
+    }
 }
 
 private final class MockURLProtocol: URLProtocol {
     static var responseData = Data()
     static var statusCode = 200
     static var lastRequest: URLRequest?
+    static var lastRequestBody: Data?
 
     static func reset() {
         responseData = Data()
         statusCode = 200
         lastRequest = nil
+        lastRequestBody = nil
     }
 
     override class func canInit(with request: URLRequest) -> Bool { true }
@@ -284,6 +416,7 @@ private final class MockURLProtocol: URLProtocol {
 
     override func startLoading() {
         Self.lastRequest = request
+        Self.lastRequestBody = request.httpBody ?? request.httpBodyStream?.readAllData()
         let response = HTTPURLResponse(
             url: request.url!,
             statusCode: Self.statusCode,
@@ -296,4 +429,24 @@ private final class MockURLProtocol: URLProtocol {
     }
 
     override func stopLoading() {}
+}
+
+private extension InputStream {
+    func readAllData() -> Data {
+        open()
+        defer { close() }
+        var data = Data()
+        let bufferSize = 1024
+        let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
+        defer { buffer.deallocate() }
+        while hasBytesAvailable {
+            let count = read(buffer, maxLength: bufferSize)
+            if count > 0 {
+                data.append(buffer, count: count)
+            } else {
+                break
+            }
+        }
+        return data
+    }
 }

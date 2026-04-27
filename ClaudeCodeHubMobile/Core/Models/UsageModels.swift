@@ -508,6 +508,38 @@ enum DashboardLeaderboardScope: String {
     case model
 }
 
+enum DashboardLeaderboardPeriod: String, CaseIterable, Identifiable {
+    case daily
+    case weekly
+    case monthly
+    case allTime
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .daily: return "Daily"
+        case .weekly: return "Weekly"
+        case .monthly: return "Monthly"
+        case .allTime: return "All Time"
+        }
+    }
+}
+
+struct DashboardUsageLogsFilter: Equatable {
+    let search: String?
+    let userId: Int?
+    let providerId: Int?
+    let sessionId: String?
+
+    init(search: String? = nil, userId: Int? = nil, providerId: Int? = nil, sessionId: String? = nil) {
+        self.search = search?.nilIfBlank
+        self.userId = userId
+        self.providerId = providerId
+        self.sessionId = sessionId?.nilIfBlank
+    }
+}
+
 struct DashboardLeaderboardEntry: Decodable, Equatable, Identifiable {
     let id: String
     let name: String
@@ -515,6 +547,25 @@ struct DashboardLeaderboardEntry: Decodable, Equatable, Identifiable {
     let totalCost: Double
     let totalTokens: Int
     let successRate: Double?
+    let modelStats: [DashboardLeaderboardEntry]
+
+    init(
+        id: String,
+        name: String,
+        totalRequests: Int,
+        totalCost: Double,
+        totalTokens: Int,
+        successRate: Double? = nil,
+        modelStats: [DashboardLeaderboardEntry] = []
+    ) {
+        self.id = id
+        self.name = name
+        self.totalRequests = totalRequests
+        self.totalCost = totalCost
+        self.totalTokens = totalTokens
+        self.successRate = successRate
+        self.modelStats = modelStats
+    }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: DynamicCodingKey.self)
@@ -531,6 +582,132 @@ struct DashboardLeaderboardEntry: Decodable, Equatable, Identifiable {
         totalCost = container.decodeDouble(forPossibleKeys: ["totalCost", "cost"]) ?? 0
         totalTokens = container.decodeInt(forPossibleKeys: ["totalTokens", "tokens"]) ?? 0
         successRate = container.decodeDouble(forPossibleKeys: ["successRate"])
+        modelStats = (try? container.decode([DashboardLeaderboardEntry].self, forKey: DynamicCodingKey(stringValue: "modelStats")!)) ?? []
+    }
+}
+
+struct AdminAPIKey: Decodable, Equatable, Identifiable {
+    let id: Int
+    let name: String
+    let maskedKey: String?
+    let status: String?
+    let todayUsage: Double?
+    let todayTokens: Int?
+    let todayCallCount: Int?
+    let lastUsedAt: Date?
+    let lastProviderName: String?
+    let providerGroup: String?
+
+    var isEnabled: Bool {
+        let normalized = status?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return normalized == nil || ["enabled", "active", "ok"].contains(normalized!)
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DynamicCodingKey.self)
+        id = container.decodeInt(forPossibleKeys: ["id", "keyId"]) ?? 0
+        name = container.decodeString(forPossibleKeys: ["name", "keyName"]) ?? "Key \(id)"
+        maskedKey = container.decodeString(forPossibleKeys: ["maskedKey", "key"])
+        status = container.decodeString(forPossibleKeys: ["status", "state"])
+        todayUsage = container.decodeDouble(forPossibleKeys: ["todayUsage", "todayTotalCostUsd", "cost"])
+        todayTokens = container.decodeInt(forPossibleKeys: ["todayTokens", "tokens", "totalTokens"])
+        todayCallCount = container.decodeInt(forPossibleKeys: ["todayCallCount", "calls", "requestCount"])
+        lastUsedAt = container.decodeDate(forPossibleKeys: ["lastUsedAt", "lastCallTime"])
+        lastProviderName = container.decodeString(forPossibleKeys: ["lastProviderName", "providerName"])
+        providerGroup = container.decodeString(forPossibleKeys: ["providerGroup", "groupTag"])
+    }
+}
+
+struct AdminUser: Decodable, Equatable, Identifiable {
+    let id: Int
+    let name: String
+    let role: String?
+    let providerGroup: String?
+    let tags: [String]
+    let isEnabled: Bool
+    let todayUsage: Double?
+    let todayTokens: Int?
+    let rpm: Int?
+    let dailyQuota: Double?
+    let limitDailyUsd: Double?
+    let expiresAt: Date?
+    let keys: [AdminAPIKey]
+
+    var searchableText: String {
+        ([name, role, providerGroup] + tags + keys.flatMap { [$0.name, $0.maskedKey, $0.lastProviderName] })
+            .compactMap { $0?.lowercased() }
+            .joined(separator: " ")
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DynamicCodingKey.self)
+        id = container.decodeInt(forPossibleKeys: ["id", "userId"]) ?? 0
+        name = container.decodeString(forPossibleKeys: ["name", "userName", "username"]) ?? "User \(id)"
+        role = container.decodeString(forPossibleKeys: ["role"])
+        providerGroup = container.decodeString(forPossibleKeys: ["providerGroup", "groupTag"])
+        tags = (try? container.decode([String].self, forKey: DynamicCodingKey(stringValue: "tags")!)) ?? []
+        isEnabled = container.decodeBool(forPossibleKeys: ["isEnabled", "enabled"]) ?? true
+        todayUsage = container.decodeDouble(forPossibleKeys: ["todayUsage", "todayTotalCostUsd", "cost"])
+        todayTokens = container.decodeInt(forPossibleKeys: ["todayTokens", "tokens", "totalTokens"])
+        rpm = container.decodeInt(forPossibleKeys: ["rpm", "limitRpm"])
+        dailyQuota = container.decodeDouble(forPossibleKeys: ["dailyQuota", "limitDailyUsd"])
+        limitDailyUsd = container.decodeDouble(forPossibleKeys: ["limitDailyUsd"])
+        expiresAt = container.decodeDate(forPossibleKeys: ["expiresAt", "expireAt"])
+        keys = (try? container.decode([AdminAPIKey].self, forKey: DynamicCodingKey(stringValue: "keys")!)) ?? []
+    }
+}
+
+struct AdminProvider: Decodable, Equatable, Identifiable {
+    let id: Int
+    let name: String
+    let url: String?
+    let maskedKey: String?
+    let isEnabled: Bool
+    let weight: Int?
+    let priority: Int?
+    let groupTag: String?
+    let providerType: String?
+    let costMultiplier: Double?
+    let rpm: Int?
+    let tpm: Int?
+    let rpd: Int?
+    let todayTotalCostUsd: Double?
+    let todayCallCount: Int?
+    let lastCallTime: Date?
+    let lastCallModel: String?
+
+    var searchableText: String {
+        [name, url, maskedKey, groupTag, providerType, lastCallModel]
+            .compactMap { $0?.lowercased() }
+            .joined(separator: " ")
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DynamicCodingKey.self)
+        id = container.decodeInt(forPossibleKeys: ["id", "providerId"]) ?? 0
+        name = container.decodeString(forPossibleKeys: ["name", "providerName"]) ?? "Provider \(id)"
+        url = container.decodeString(forPossibleKeys: ["url", "endpointUrl", "websiteUrl"])
+        maskedKey = container.decodeString(forPossibleKeys: ["maskedKey", "key"])
+        isEnabled = container.decodeBool(forPossibleKeys: ["isEnabled", "enabled"]) ?? true
+        weight = container.decodeInt(forPossibleKeys: ["weight"])
+        priority = container.decodeInt(forPossibleKeys: ["priority"])
+        groupTag = container.decodeString(forPossibleKeys: ["groupTag", "providerGroup"])
+        providerType = container.decodeString(forPossibleKeys: ["providerType", "type"])
+        costMultiplier = container.decodeDouble(forPossibleKeys: ["costMultiplier"])
+        rpm = container.decodeInt(forPossibleKeys: ["rpm"])
+        tpm = container.decodeInt(forPossibleKeys: ["tpm"])
+        rpd = container.decodeInt(forPossibleKeys: ["rpd"])
+        todayTotalCostUsd = container.decodeDouble(forPossibleKeys: ["todayTotalCostUsd", "todayUsage", "cost"])
+        todayCallCount = container.decodeInt(forPossibleKeys: ["todayCallCount", "calls", "requestCount"])
+        lastCallTime = container.decodeDate(forPossibleKeys: ["lastCallTime", "lastUsedAt"])
+        lastCallModel = container.decodeString(forPossibleKeys: ["lastCallModel", "model"])
+    }
+}
+
+private extension String {
+    var nilIfBlank: String? {
+        let trimmed = trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
     }
 }
 

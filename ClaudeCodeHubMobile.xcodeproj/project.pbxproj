@@ -9,42 +9,42 @@
 /* Begin PBXBuildFile section */
 		A10000010000000000000001 /* ClaudeCodeHubMobileApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000010000000000000011 /* ClaudeCodeHubMobileApp.swift */; };
 		A10000010000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000010000000000000012 /* ContentView.swift */; };
-		B10000010000000000000001 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000010000000000000101 /* RootView.swift */; };
-		B10000010000000000000002 /* APIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000010000000000000102 /* APIError.swift */; };
-		B10000010000000000000003 /* AnyJSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000010000000000000103 /* AnyJSON.swift */; };
-		B10000010000000000000004 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000010000000000000104 /* APIClient.swift */; };
-		B10000010000000000000005 /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000010000000000000105 /* SessionStore.swift */; };
-		B10000010000000000000006 /* UsageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000010000000000000106 /* UsageModels.swift */; };
-		B10000010000000000000007 /* AppFormatters.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000010000000000000107 /* AppFormatters.swift */; };
-		B10000010000000000000008 /* LoginViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000010000000000000108 /* LoginViewModel.swift */; };
-		B10000010000000000000009 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000010000000000000109 /* LoginView.swift */; };
-		B1000001000000000000000A /* OverviewViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000001000000000000010A /* OverviewViewModel.swift */; };
-		B1000001000000000000000B /* OverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000001000000000000010B /* OverviewView.swift */; };
-		B1000001000000000000000C /* LogsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000001000000000000010C /* LogsViewModel.swift */; };
-		B1000001000000000000000D /* LogsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000001000000000000010D /* LogsView.swift */; };
-		B1000001000000000000000E /* SharedViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000001000000000000010E /* SharedViews.swift */; };
-		B1000001000000000000000F /* AccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000001000000000000010F /* AccountView.swift */; };
+		B10000010000000000000001 /* App/RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000010000000000000101 /* App/RootView.swift */; };
+		B10000010000000000000002 /* Core/Networking/APIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000010000000000000102 /* Core/Networking/APIError.swift */; };
+		B10000010000000000000003 /* Core/Networking/AnyJSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000010000000000000103 /* Core/Networking/AnyJSON.swift */; };
+		B10000010000000000000004 /* Core/Networking/APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000010000000000000104 /* Core/Networking/APIClient.swift */; };
+		B10000010000000000000005 /* Core/Session/SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000010000000000000105 /* Core/Session/SessionStore.swift */; };
+		B10000010000000000000006 /* Core/Models/UsageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000010000000000000106 /* Core/Models/UsageModels.swift */; };
+		B10000010000000000000007 /* Shared/Formatters/AppFormatters.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000010000000000000107 /* Shared/Formatters/AppFormatters.swift */; };
+		B10000010000000000000008 /* Features/Login/LoginViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000010000000000000108 /* Features/Login/LoginViewModel.swift */; };
+		B10000010000000000000009 /* Features/Login/LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000010000000000000109 /* Features/Login/LoginView.swift */; };
+		B1000001000000000000000A /* Features/Overview/OverviewViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000001000000000000010A /* Features/Overview/OverviewViewModel.swift */; };
+		B1000001000000000000000B /* Features/Overview/OverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000001000000000000010B /* Features/Overview/OverviewView.swift */; };
+		B1000001000000000000000C /* Features/Logs/LogsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000001000000000000010C /* Features/Logs/LogsViewModel.swift */; };
+		B1000001000000000000000D /* Features/Logs/LogsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000001000000000000010D /* Features/Logs/LogsView.swift */; };
+		B1000001000000000000000E /* Shared/SharedViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000001000000000000010E /* Shared/SharedViews.swift */; };
+		B1000001000000000000000F /* Features/Account/AccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000001000000000000010F /* Features/Account/AccountView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		A10000010000000000000010 /* ClaudeCodeHubMobile.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClaudeCodeHubMobile.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A10000010000000000000011 /* ClaudeCodeHubMobileApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeCodeHubMobileApp.swift; sourceTree = "<group>"; };
 		A10000010000000000000012 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		B10000010000000000000101 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/RootView.swift; sourceTree = "<group>"; };
-		B10000010000000000000102 /* APIError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/Networking/APIError.swift; sourceTree = "<group>"; };
-		B10000010000000000000103 /* AnyJSON.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/Networking/AnyJSON.swift; sourceTree = "<group>"; };
-		B10000010000000000000104 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/Networking/APIClient.swift; sourceTree = "<group>"; };
-		B10000010000000000000105 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/Session/SessionStore.swift; sourceTree = "<group>"; };
-		B10000010000000000000106 /* UsageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/Models/UsageModels.swift; sourceTree = "<group>"; };
-		B10000010000000000000107 /* AppFormatters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared/Formatters/AppFormatters.swift; sourceTree = "<group>"; };
-		B10000010000000000000108 /* LoginViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Login/LoginViewModel.swift; sourceTree = "<group>"; };
-		B10000010000000000000109 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Login/LoginView.swift; sourceTree = "<group>"; };
-		B1000001000000000000010A /* OverviewViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Overview/OverviewViewModel.swift; sourceTree = "<group>"; };
-		B1000001000000000000010B /* OverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Overview/OverviewView.swift; sourceTree = "<group>"; };
-		B1000001000000000000010C /* LogsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Logs/LogsViewModel.swift; sourceTree = "<group>"; };
-		B1000001000000000000010D /* LogsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Logs/LogsView.swift; sourceTree = "<group>"; };
-		B1000001000000000000010E /* SharedViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared/SharedViews.swift; sourceTree = "<group>"; };
-		B1000001000000000000010F /* AccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Account/AccountView.swift; sourceTree = "<group>"; };
+		B10000010000000000000101 /* App/RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/RootView.swift; sourceTree = "<group>"; };
+		B10000010000000000000102 /* Core/Networking/APIError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/Networking/APIError.swift; sourceTree = "<group>"; };
+		B10000010000000000000103 /* Core/Networking/AnyJSON.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/Networking/AnyJSON.swift; sourceTree = "<group>"; };
+		B10000010000000000000104 /* Core/Networking/APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/Networking/APIClient.swift; sourceTree = "<group>"; };
+		B10000010000000000000105 /* Core/Session/SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/Session/SessionStore.swift; sourceTree = "<group>"; };
+		B10000010000000000000106 /* Core/Models/UsageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/Models/UsageModels.swift; sourceTree = "<group>"; };
+		B10000010000000000000107 /* Shared/Formatters/AppFormatters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared/Formatters/AppFormatters.swift; sourceTree = "<group>"; };
+		B10000010000000000000108 /* Features/Login/LoginViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Login/LoginViewModel.swift; sourceTree = "<group>"; };
+		B10000010000000000000109 /* Features/Login/LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Login/LoginView.swift; sourceTree = "<group>"; };
+		B1000001000000000000010A /* Features/Overview/OverviewViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Overview/OverviewViewModel.swift; sourceTree = "<group>"; };
+		B1000001000000000000010B /* Features/Overview/OverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Overview/OverviewView.swift; sourceTree = "<group>"; };
+		B1000001000000000000010C /* Features/Logs/LogsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Logs/LogsViewModel.swift; sourceTree = "<group>"; };
+		B1000001000000000000010D /* Features/Logs/LogsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Logs/LogsView.swift; sourceTree = "<group>"; };
+		B1000001000000000000010E /* Shared/SharedViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared/SharedViews.swift; sourceTree = "<group>"; };
+		B1000001000000000000010F /* Features/Account/AccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Account/AccountView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -71,21 +71,21 @@
 			children = (
 				A10000010000000000000011 /* ClaudeCodeHubMobileApp.swift */,
 				A10000010000000000000012 /* ContentView.swift */,
-				B10000010000000000000101 /* RootView.swift */,
-				B10000010000000000000102 /* APIError.swift */,
-				B10000010000000000000103 /* AnyJSON.swift */,
-				B10000010000000000000104 /* APIClient.swift */,
-				B10000010000000000000105 /* SessionStore.swift */,
-				B10000010000000000000106 /* UsageModels.swift */,
-				B10000010000000000000107 /* AppFormatters.swift */,
-				B10000010000000000000108 /* LoginViewModel.swift */,
-				B10000010000000000000109 /* LoginView.swift */,
-				B1000001000000000000010A /* OverviewViewModel.swift */,
-				B1000001000000000000010B /* OverviewView.swift */,
-				B1000001000000000000010C /* LogsViewModel.swift */,
-				B1000001000000000000010D /* LogsView.swift */,
-				B1000001000000000000010E /* SharedViews.swift */,
-				B1000001000000000000010F /* AccountView.swift */,
+				B10000010000000000000101 /* App/RootView.swift */,
+				B10000010000000000000102 /* Core/Networking/APIError.swift */,
+				B10000010000000000000103 /* Core/Networking/AnyJSON.swift */,
+				B10000010000000000000104 /* Core/Networking/APIClient.swift */,
+				B10000010000000000000105 /* Core/Session/SessionStore.swift */,
+				B10000010000000000000106 /* Core/Models/UsageModels.swift */,
+				B10000010000000000000107 /* Shared/Formatters/AppFormatters.swift */,
+				B10000010000000000000108 /* Features/Login/LoginViewModel.swift */,
+				B10000010000000000000109 /* Features/Login/LoginView.swift */,
+				B1000001000000000000010A /* Features/Overview/OverviewViewModel.swift */,
+				B1000001000000000000010B /* Features/Overview/OverviewView.swift */,
+				B1000001000000000000010C /* Features/Logs/LogsViewModel.swift */,
+				B1000001000000000000010D /* Features/Logs/LogsView.swift */,
+				B1000001000000000000010E /* Shared/SharedViews.swift */,
+				B1000001000000000000010F /* Features/Account/AccountView.swift */,
 			);
 			path = ClaudeCodeHubMobile;
 			sourceTree = "<group>";
@@ -169,21 +169,21 @@
 			files = (
 				A10000010000000000000001 /* ClaudeCodeHubMobileApp.swift in Sources */,
 				A10000010000000000000002 /* ContentView.swift in Sources */,
-				B10000010000000000000001 /* RootView.swift in Sources */,
-				B10000010000000000000002 /* APIError.swift in Sources */,
-				B10000010000000000000003 /* AnyJSON.swift in Sources */,
-				B10000010000000000000004 /* APIClient.swift in Sources */,
-				B10000010000000000000005 /* SessionStore.swift in Sources */,
-				B10000010000000000000006 /* UsageModels.swift in Sources */,
-				B10000010000000000000007 /* AppFormatters.swift in Sources */,
-				B10000010000000000000008 /* LoginViewModel.swift in Sources */,
-				B10000010000000000000009 /* LoginView.swift in Sources */,
-				B1000001000000000000000A /* OverviewViewModel.swift in Sources */,
-				B1000001000000000000000B /* OverviewView.swift in Sources */,
-				B1000001000000000000000C /* LogsViewModel.swift in Sources */,
-				B1000001000000000000000D /* LogsView.swift in Sources */,
-				B1000001000000000000000E /* SharedViews.swift in Sources */,
-				B1000001000000000000000F /* AccountView.swift in Sources */,
+				B10000010000000000000001 /* App/RootView.swift in Sources */,
+				B10000010000000000000002 /* Core/Networking/APIError.swift in Sources */,
+				B10000010000000000000003 /* Core/Networking/AnyJSON.swift in Sources */,
+				B10000010000000000000004 /* Core/Networking/APIClient.swift in Sources */,
+				B10000010000000000000005 /* Core/Session/SessionStore.swift in Sources */,
+				B10000010000000000000006 /* Core/Models/UsageModels.swift in Sources */,
+				B10000010000000000000007 /* Shared/Formatters/AppFormatters.swift in Sources */,
+				B10000010000000000000008 /* Features/Login/LoginViewModel.swift in Sources */,
+				B10000010000000000000009 /* Features/Login/LoginView.swift in Sources */,
+				B1000001000000000000000A /* Features/Overview/OverviewViewModel.swift in Sources */,
+				B1000001000000000000000B /* Features/Overview/OverviewView.swift in Sources */,
+				B1000001000000000000000C /* Features/Logs/LogsViewModel.swift in Sources */,
+				B1000001000000000000000D /* Features/Logs/LogsView.swift in Sources */,
+				B1000001000000000000000E /* Shared/SharedViews.swift in Sources */,
+				B1000001000000000000000F /* Features/Account/AccountView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -259,6 +259,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"ClaudeCodeHubMobile/Preview Content\"";
+				DEVELOPMENT_TEAM = 58M23C5WLR;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -287,6 +288,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"ClaudeCodeHubMobile/Preview Content\"";
+				DEVELOPMENT_TEAM = 58M23C5WLR;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -333,4 +335,3 @@
 	};
 	rootObject = A10000010000000000000060 /* Project object */;
 }
-

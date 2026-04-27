@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 @MainActor
 final class LogsViewModel: ObservableObject {
@@ -11,6 +12,7 @@ final class LogsViewModel: ObservableObject {
     @Published private(set) var isLoading = false
     @Published private(set) var isLoadingMore = false
     @Published private(set) var hasMorePages = false
+    @Published private(set) var highlightedLogIDs: Set<String> = []
     @Published var selectedModel = "All"
     @Published var selectedEndpoint = "All"
     @Published var selectedStatus = "All"
@@ -21,6 +23,7 @@ final class LogsViewModel: ObservableObject {
     private var hasLoaded = false
     private var nextCursor: UsageLogsCursor?
     private var nextOffset = 0
+    private var recentRecordHighlighter = RecentRecordHighlighter()
     private let pageSize = 100
 
     let statusOptions = ["All", "success", "failed", "unknown"]
@@ -65,6 +68,10 @@ final class LogsViewModel: ObservableObject {
         }
     }
 
+    func isHighlighted(_ log: UsageLog) -> Bool {
+        highlightedLogIDs.contains(log.id)
+    }
+
     private func refresh(showsLoading: Bool) async {
         guard let client = sessionStore.client else {
             errorMessage = APIError.missingSession.message
@@ -101,7 +108,13 @@ final class LogsViewModel: ObservableObject {
                 adminOverview = nil
             }
 
-            logs = sorted(response.records)
+            let sortedRecords = sorted(response.records)
+            let insertedIDs = recentRecordHighlighter.update(with: sortedRecords.map(\.id))
+            withAnimation(insertedIDs.isEmpty ? nil : .spring(response: 0.35, dampingFraction: 0.82)) {
+                logs = sortedRecords
+                highlightedLogIDs = recentRecordHighlighter.highlightedIDs
+            }
+            scheduleHighlightClear(for: insertedIDs)
             nextOffset = response.records.count
             nextCursor = response.nextCursor
             hasMorePages = computeHasMore(from: response)
@@ -138,7 +151,13 @@ final class LogsViewModel: ObservableObject {
             }
             let existingIDs = Set(logs.map(\.id))
             let newRecords = response.records.filter { !existingIDs.contains($0.id) }
-            logs = sorted(logs + newRecords)
+            let sortedRecords = sorted(logs + newRecords)
+            let insertedIDs = recentRecordHighlighter.update(with: sortedRecords.map(\.id))
+            withAnimation(insertedIDs.isEmpty ? nil : .spring(response: 0.35, dampingFraction: 0.82)) {
+                logs = sortedRecords
+                highlightedLogIDs = recentRecordHighlighter.highlightedIDs
+            }
+            scheduleHighlightClear(for: insertedIDs)
             nextOffset += response.records.count
             nextCursor = response.nextCursor
             hasMorePages = computeHasMore(from: response)
@@ -168,6 +187,20 @@ final class LogsViewModel: ObservableObject {
         records.sorted { left, right in
             if left.isLive != right.isLive { return left.isLive && !right.isLive }
             return (left.startTime ?? .distantPast) > (right.startTime ?? .distantPast)
+        }
+    }
+
+    private func scheduleHighlightClear(for ids: Set<String>) {
+        guard !ids.isEmpty else { return }
+        Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 2_400_000_000)
+            await MainActor.run {
+                guard let self else { return }
+                withAnimation(.easeOut(duration: 0.45)) {
+                    ids.forEach { self.recentRecordHighlighter.clear($0) }
+                    self.highlightedLogIDs = self.recentRecordHighlighter.highlightedIDs
+                }
+            }
         }
     }
 

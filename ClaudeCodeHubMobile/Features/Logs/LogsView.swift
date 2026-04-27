@@ -43,11 +43,13 @@ struct LogsView: View {
                         ForEach(viewModel.filteredLogs) { log in
                             if viewModel.isAdmin {
                                 AdminUsageLogRow(log: log, timeZone: viewModel.resolvedTimeZone)
+                                    .newRecordHighlight(isActive: viewModel.isHighlighted(log))
                                     .onAppear {
                                         Task { await viewModel.loadMoreIfNeeded(currentLog: log) }
                                     }
                             } else {
                                 UsageLogRow(log: log, timeZone: viewModel.resolvedTimeZone)
+                                    .newRecordHighlight(isActive: viewModel.isHighlighted(log))
                                     .onAppear {
                                         Task { await viewModel.loadMoreIfNeeded(currentLog: log) }
                                     }
@@ -350,6 +352,43 @@ private struct SmallMetric: View {
             Image(systemName: icon)
                 .foregroundStyle(.secondary)
         }
+    }
+}
+
+private struct NewRecordHighlightModifier: ViewModifier {
+    let isActive: Bool
+
+    func body(content: Content) -> some View {
+        content
+            .padding(.vertical, isActive ? 2 : 0)
+            .scaleEffect(isActive ? 1.015 : 1)
+            .background {
+                if isActive {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Color.green.opacity(0.14))
+                        .transition(.opacity.combined(with: .scale(scale: 0.98)))
+                }
+            }
+            .overlay(alignment: .topTrailing) {
+                if isActive {
+                    Text("NEW")
+                        .font(.caption2.weight(.bold))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 3)
+                        .background(Color.green.opacity(0.18), in: Capsule())
+                        .foregroundStyle(.green)
+                        .offset(x: 4, y: -4)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
+            }
+            .listRowBackground(isActive ? Color.green.opacity(0.08) : Color.clear)
+            .animation(.spring(response: 0.35, dampingFraction: 0.82), value: isActive)
+    }
+}
+
+private extension View {
+    func newRecordHighlight(isActive: Bool) -> some View {
+        modifier(NewRecordHighlightModifier(isActive: isActive))
     }
 }
 

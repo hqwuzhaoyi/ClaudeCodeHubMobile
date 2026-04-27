@@ -276,6 +276,32 @@ struct UsageLogsResponse: Decodable, Equatable {
     }
 }
 
+struct RecentRecordHighlighter: Equatable {
+    private var hasSnapshot = false
+    private var knownIDs: Set<String> = []
+    private(set) var highlightedIDs: Set<String> = []
+
+    mutating func update(with currentIDs: [String]) -> Set<String> {
+        let current = Set(currentIDs)
+        defer {
+            knownIDs.formUnion(current)
+            hasSnapshot = true
+        }
+        guard hasSnapshot else { return [] }
+        let inserted = current.subtracting(knownIDs)
+        highlightedIDs.formUnion(inserted)
+        return inserted
+    }
+
+    mutating func clear(_ id: String) {
+        highlightedIDs.remove(id)
+    }
+
+    func isHighlighted(_ id: String) -> Bool {
+        highlightedIDs.contains(id)
+    }
+}
+
 struct UsageLog: Decodable, Equatable, Identifiable {
     let id: String
     let timestamp: Date?

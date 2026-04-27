@@ -357,32 +357,56 @@ private struct SmallMetric: View {
 
 private struct NewRecordHighlightModifier: ViewModifier {
     let isActive: Bool
+    @State private var sweepProgress = false
 
     func body(content: Content) -> some View {
         content
-            .padding(.vertical, isActive ? 2 : 0)
-            .scaleEffect(isActive ? 1.015 : 1)
+            .transition(.asymmetric(insertion: .move(edge: .top).combined(with: .opacity), removal: .opacity))
             .background {
                 if isActive {
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(Color.green.opacity(0.14))
-                        .transition(.opacity.combined(with: .scale(scale: 0.98)))
+                    GeometryReader { proxy in
+                        LinearGradient(
+                            colors: [.clear, Color.green.opacity(0.11), .clear],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                        .frame(width: max(84, proxy.size.width * 0.32))
+                        .offset(x: sweepProgress ? proxy.size.width + 36 : -120)
+                        .opacity(0.95)
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .allowsHitTesting(false)
+                    .transition(.opacity)
                 }
             }
-            .overlay(alignment: .topTrailing) {
+            .overlay(alignment: .leading) {
                 if isActive {
-                    Text("NEW")
-                        .font(.caption2.weight(.bold))
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 3)
-                        .background(Color.green.opacity(0.18), in: Capsule())
-                        .foregroundStyle(.green)
-                        .offset(x: 4, y: -4)
-                        .transition(.move(edge: .top).combined(with: .opacity))
+                    Capsule()
+                        .fill(Color.green)
+                        .frame(width: 3)
+                        .padding(.vertical, 5)
+                        .offset(x: -9)
+                        .opacity(0.85)
+                        .transition(.opacity.combined(with: .move(edge: .leading)))
                 }
             }
-            .listRowBackground(isActive ? Color.green.opacity(0.08) : Color.clear)
-            .animation(.spring(response: 0.35, dampingFraction: 0.82), value: isActive)
+            .listRowBackground(Color.clear)
+            .onAppear { startSweepIfNeeded() }
+            .onChange(of: isActive) { _, _ in startSweepIfNeeded() }
+            .animation(.easeOut(duration: 0.22), value: isActive)
+    }
+
+    private func startSweepIfNeeded() {
+        guard isActive else {
+            sweepProgress = false
+            return
+        }
+        sweepProgress = false
+        DispatchQueue.main.async {
+            withAnimation(.linear(duration: 0.7)) {
+                sweepProgress = true
+            }
+        }
     }
 }
 
@@ -427,19 +451,43 @@ private struct StatusPill: View {
     let status: String
     let statusCode: Int?
 
+    private var normalizedStatus: String {
+        status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    }
+
     private var isSuccess: Bool {
         if let statusCode { return (200..<400).contains(statusCode) }
-        let normalized = status.lowercased()
-        return ["success", "succeeded", "ok", "complete", "completed", "done"].contains(normalized) || normalized.hasPrefix("2")
+        return ["success", "succeeded", "ok", "complete", "completed", "done"].contains(normalizedStatus) || normalizedStatus.hasPrefix("2")
+    }
+
+    private var isRequesting: Bool {
+        ["requesting", "in_progress", "running", "active", "streaming", "pending"].contains(normalizedStatus)
+    }
+
+    private var tint: Color {
+        if isSuccess { return .green }
+        if isRequesting { return .blue }
+        return .orange
+    }
+
+    private var displayText: String {
+        switch normalizedStatus {
+        case "requesting":
+            return "Requesting"
+        case "in_progress":
+            return "In Progress"
+        default:
+            return status.replacingOccurrences(of: "_", with: " ").capitalized
+        }
     }
 
     var body: some View {
-        Text(status.capitalized)
+        Text(displayText)
             .font(.caption.weight(.semibold))
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .background((isSuccess ? Color.green : Color.orange).opacity(0.15), in: Capsule())
-            .foregroundStyle(isSuccess ? .green : .orange)
+            .background(tint.opacity(0.15), in: Capsule())
+            .foregroundStyle(tint)
     }
 }
 

@@ -325,14 +325,20 @@ struct UsageLog: Decodable, Equatable, Identifiable {
     let ttfbMs: Int?
     let errorMessage: String?
 
+    var isRequesting: Bool {
+        status == nil && statusCode == nil && sessionId != nil && (requestSequence != nil || durationMs != nil || ttfbMs != nil)
+    }
+
     var displayStatus: String {
         if let status, !status.isEmpty { return status }
         if let statusCode { return (200..<400).contains(statusCode) ? "success" : "failed" }
+        if isRequesting { return "requesting" }
         return "unknown"
     }
 
     var statusCategory: String {
         if let statusCode { return (200..<400).contains(statusCode) ? "success" : "failed" }
+        if isRequesting { return "requesting" }
         guard let status else { return "unknown" }
         let normalized = status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         if normalized.isEmpty { return "unknown" }

@@ -26,7 +26,7 @@ final class LogsViewModel: ObservableObject {
     private var recentRecordHighlighter = RecentRecordHighlighter()
     private let pageSize = 100
 
-    let statusOptions = ["All", "success", "failed", "unknown"]
+    let statusOptions = ["All", "success", "requesting", "failed", "unknown"]
 
     init(sessionStore: SessionStore) {
         self.sessionStore = sessionStore

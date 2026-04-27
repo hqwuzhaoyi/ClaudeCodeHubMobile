@@ -133,6 +133,32 @@ final class APIClientLiveContractTests: XCTestCase {
         XCTAssertEqual(response.total, 321173)
     }
 
+    func testDashboardInFlightUsageLogDisplaysRequestingInsteadOfUnknown() async throws {
+        let client = makeClient(responseBody: """
+        {
+          "ok": true,
+          "data": {
+            "logs": [
+              {
+                "id": 8,
+                "createdAt": "2026-04-27T00:00:01Z",
+                "sessionId": "session-live",
+                "requestSequence": 9,
+                "model": "gpt-5.5",
+                "endpoint": "/v1/responses",
+                "durationMs": 1200
+              }
+            ]
+          }
+        }
+        """)
+
+        let response = try await client.getDashboardUsageLogs(limit: 1)
+
+        XCTAssertEqual(response.records.first?.displayStatus, "requesting")
+        XCTAssertEqual(response.records.first?.statusCategory, "requesting")
+    }
+
     func testActiveSessionsUseDashboardMonitoringActionAndDecodeSessionAggregates() async throws {
         let client = makeClient(responseBody: """
         {

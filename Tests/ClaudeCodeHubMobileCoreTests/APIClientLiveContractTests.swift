@@ -204,6 +204,8 @@ final class APIClientLiveContractTests: XCTestCase {
                   "id": 2,
                   "name": "default",
                   "maskedKey": "sk-b••••••9222",
+                  "fullKey": "test-token-value",
+                  "canCopy": true,
                   "status": "enabled",
                   "todayUsage": 1008.024591,
                   "todayTokens": 880698866,
@@ -223,7 +225,37 @@ final class APIClientLiveContractTests: XCTestCase {
         XCTAssertEqual(users.first?.name, "codex")
         XCTAssertEqual(users.first?.isEnabled, true)
         XCTAssertEqual(users.first?.keys.first?.maskedKey, "sk-b••••••9222")
+        XCTAssertEqual(users.first?.keys.first?.fullKey, "test-token-value")
+        XCTAssertEqual(users.first?.keys.first?.canCopy, true)
         XCTAssertEqual(users.first?.keys.first?.todayCallCount, 2563)
+    }
+
+    func testProviderHealthStatusDecodesCircuitBreakerStateByProviderId() async throws {
+        let client = makeClient(responseBody: """
+        {
+          "ok": true,
+          "data": {
+            "98": {
+              "circuitState": "open",
+              "failureCount": 7,
+              "lastFailureTime": 1777305317172
+            },
+            "101": {
+              "circuitState": "closed",
+              "failureCount": 0,
+              "lastFailureTime": null
+            }
+          }
+        }
+        """)
+
+        let statuses = try await client.getProvidersHealthStatus()
+
+        XCTAssertEqual(MockURLProtocol.lastRequest?.url?.path, "/api/actions/providers/getProvidersHealthStatus")
+        XCTAssertEqual(statuses.count, 2)
+        XCTAssertEqual(statuses.first { $0.providerId == 98 }?.circuitState, "open")
+        XCTAssertEqual(statuses.first { $0.providerId == 98 }?.failureCount, 7)
+        XCTAssertEqual(statuses.first { $0.providerId == 101 }?.isCircuitOpen, false)
     }
 
     func testAdminProvidersDecodeProviderManagementShape() async throws {

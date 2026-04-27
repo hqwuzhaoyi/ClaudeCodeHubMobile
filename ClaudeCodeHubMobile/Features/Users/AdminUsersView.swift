@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct AdminUsersView: View {
     @StateObject private var viewModel: AdminUsersViewModel
@@ -145,6 +146,7 @@ private struct AdminUserRow: View {
 
 private struct AdminKeyRow: View {
     let key: AdminAPIKey
+    @State private var copied = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -170,6 +172,22 @@ private struct AdminKeyRow: View {
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
+            }
+            if key.canCopy, let fullKey = key.fullKey, !fullKey.isEmpty {
+                Button {
+                    UIPasteboard.general.string = fullKey
+                    copied = true
+                    Task {
+                        try? await Task.sleep(nanoseconds: 1_600_000_000)
+                        await MainActor.run { copied = false }
+                    }
+                } label: {
+                    Label(copied ? "Token copied" : "Copy token", systemImage: copied ? "checkmark.circle.fill" : "doc.on.doc")
+                }
+                .font(.caption.weight(.semibold))
+                .buttonStyle(.borderless)
+                .tint(copied ? .green : .blue)
+                .accessibilityLabel(copied ? "Token copied" : "Copy token")
             }
         }
         .padding(10)

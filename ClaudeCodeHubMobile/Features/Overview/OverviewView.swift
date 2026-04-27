@@ -70,9 +70,98 @@ private struct AdminDashboardHome: View {
 
             LiveSessionsHomeCard(sessions: viewModel.visibleActiveSessions, totalCount: viewModel.activeSessions.count)
 
+            CircuitBreakerHomeCard(providers: viewModel.circuitBreakerProviders, timeZone: viewModel.resolvedTimeZone)
+
             LeaderboardMiniCard(title: "User Rankings", icon: "person.2", accent: .blue, entries: viewModel.userLeaderboard)
             LeaderboardMiniCard(title: "Provider Rankings", icon: "point.3.connected.trianglepath.dotted", accent: .purple, entries: viewModel.providerLeaderboard)
             LeaderboardMiniCard(title: "Model Rankings", icon: "cpu", accent: .green, entries: viewModel.modelLeaderboard)
+        }
+    }
+}
+
+private struct CircuitBreakerHomeCard: View {
+    let providers: [CircuitBreakerProvider]
+    let timeZone: TimeZone?
+
+    var body: some View {
+        Card {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Label("Circuit Breakers", systemImage: "bolt.trianglebadge.exclamationmark")
+                        .font(.headline)
+                    Spacer()
+                    Text(providers.isEmpty ? "Healthy" : "\(providers.count) open")
+                        .font(.caption.weight(.semibold))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background((providers.isEmpty ? Color.green : Color.orange).opacity(0.14), in: Capsule())
+                        .foregroundStyle(providers.isEmpty ? .green : .orange)
+                }
+
+                if providers.isEmpty {
+                    HStack(spacing: 10) {
+                        Image(systemName: "checkmark.seal.fill")
+                            .foregroundStyle(.green)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("No providers are currently fused")
+                                .font(.subheadline.weight(.medium))
+                            Text("Open or half-open provider circuits will appear here.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    ForEach(providers.prefix(5)) { item in
+                        CircuitBreakerProviderRow(item: item, timeZone: timeZone)
+                    }
+                    if providers.count > 5 {
+                        Text("+ \(providers.count - 5) more fused providers")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
+    }
+}
+
+private struct CircuitBreakerProviderRow: View {
+    let item: CircuitBreakerProvider
+    let timeZone: TimeZone?
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Circle()
+                .fill(.orange)
+                .frame(width: 9, height: 9)
+                .padding(.top, 5)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(item.provider.name)
+                    .font(.subheadline.weight(.semibold))
+                    .lineLimit(1)
+                HStack(spacing: 6) {
+                    Text(item.health.displayState)
+                    Text("·")
+                    Text("\(item.health.failureCount) failures")
+                    if let providerType = item.provider.providerType {
+                        Text("·")
+                        Text(providerType)
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                if let lastFailureTime = item.health.lastFailureTime {
+                    Text("Last failure \(AppFormatters.dateTime(lastFailureTime, timeZone: timeZone))")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            Spacer()
+            Text(item.provider.groupTag ?? "—")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
         }
     }
 }

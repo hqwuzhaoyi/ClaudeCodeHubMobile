@@ -68,6 +68,9 @@ final class LiveServerIntegrationTests: XCTestCase {
 
             let providers = try await client.getAdminProviders()
             XCTAssertFalse(providers.isEmpty)
+
+            let providerHealth = try await client.getProvidersHealthStatus()
+            XCTAssertFalse(providerHealth.isEmpty)
         }
     }
 }

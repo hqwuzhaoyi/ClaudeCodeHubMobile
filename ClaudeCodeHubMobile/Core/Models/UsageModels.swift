@@ -590,6 +590,8 @@ struct AdminAPIKey: Decodable, Equatable, Identifiable {
     let id: Int
     let name: String
     let maskedKey: String?
+    let fullKey: String?
+    let canCopy: Bool
     let status: String?
     let todayUsage: Double?
     let todayTokens: Int?
@@ -608,6 +610,8 @@ struct AdminAPIKey: Decodable, Equatable, Identifiable {
         id = container.decodeInt(forPossibleKeys: ["id", "keyId"]) ?? 0
         name = container.decodeString(forPossibleKeys: ["name", "keyName"]) ?? "Key \(id)"
         maskedKey = container.decodeString(forPossibleKeys: ["maskedKey", "key"])
+        fullKey = container.decodeString(forPossibleKeys: ["fullKey", "token", "accessKey"])
+        canCopy = container.decodeBool(forPossibleKeys: ["canCopy", "copyable"]) ?? (fullKey != nil)
         status = container.decodeString(forPossibleKeys: ["status", "state"])
         todayUsage = container.decodeDouble(forPossibleKeys: ["todayUsage", "todayTotalCostUsd", "cost"])
         todayTokens = container.decodeInt(forPossibleKeys: ["todayTokens", "tokens", "totalTokens"])
@@ -655,6 +659,55 @@ struct AdminUser: Decodable, Equatable, Identifiable {
         expiresAt = container.decodeDate(forPossibleKeys: ["expiresAt", "expireAt"])
         keys = (try? container.decode([AdminAPIKey].self, forKey: DynamicCodingKey(stringValue: "keys")!)) ?? []
     }
+}
+
+struct ProviderHealthStatus: Decodable, Equatable, Identifiable {
+    let providerId: Int
+    let circuitState: String
+    let failureCount: Int
+    let lastFailureTime: Date?
+
+    var id: Int { providerId }
+
+    var isCircuitOpen: Bool {
+        let normalized = circuitState.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return normalized == "open" || normalized == "half_open" || normalized == "half-open"
+    }
+
+    var displayState: String {
+        circuitState.replacingOccurrences(of: "_", with: " ").capitalized
+    }
+
+    init(providerId: Int = 0, circuitState: String, failureCount: Int, lastFailureTime: Date?) {
+        self.providerId = providerId
+        self.circuitState = circuitState
+        self.failureCount = failureCount
+        self.lastFailureTime = lastFailureTime
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DynamicCodingKey.self)
+        providerId = container.decodeInt(forPossibleKeys: ["providerId", "id"]) ?? 0
+        circuitState = container.decodeString(forPossibleKeys: ["circuitState", "state"]) ?? "unknown"
+        failureCount = container.decodeInt(forPossibleKeys: ["failureCount", "failures"]) ?? 0
+        lastFailureTime = container.decodeDate(forPossibleKeys: ["lastFailureTime", "lastFailureAt"])
+    }
+
+    func assigningProviderId(_ providerId: Int) -> ProviderHealthStatus {
+        ProviderHealthStatus(
+            providerId: providerId,
+            circuitState: circuitState,
+            failureCount: failureCount,
+            lastFailureTime: lastFailureTime
+        )
+    }
+}
+
+struct CircuitBreakerProvider: Equatable, Identifiable {
+    let provider: AdminProvider
+    let health: ProviderHealthStatus
+
+    var id: Int { provider.id }
 }
 
 struct AdminProvider: Decodable, Equatable, Identifiable {

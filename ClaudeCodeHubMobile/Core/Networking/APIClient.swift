@@ -112,6 +112,18 @@ final class APIClient {
         return response.value
     }
 
+    func getProvidersHealthStatus() async throws -> [ProviderHealthStatus] {
+        let response: FlexibleEnvelope<[String: ProviderHealthStatus]> = try await post(
+            "/api/actions/providers/getProvidersHealthStatus",
+            body: EmptyBody()
+        )
+        return response.value.compactMap { providerId, status in
+            guard let id = Int(providerId) else { return nil }
+            return status.assigningProviderId(id)
+        }
+        .sorted { $0.providerId < $1.providerId }
+    }
+
     func validateSession() async throws {
         _ = try await postData("/api/actions/my-usage/getMyQuota", body: EmptyBody())
     }

@@ -120,3 +120,10 @@ xcodebuild -project ClaudeCodeHubMobile.xcodeproj \
    - Move any raw-key persistence to Keychain if persistence is needed beyond cookies.
    - Polish iPhone/iPad layouts, empty states, and accessibility labels.
    - Prepare signing, archive, TestFlight/manual distribution notes, and release tagging discipline. See `docs/release/preflight.md` for the current checklist.
+  
+
+## 社区支持
+Linux.do 社区：https://linux.do/
+
+## 许可证
+MIT License

@@ -415,6 +415,53 @@ final class APIClientLiveContractTests: XCTestCase {
         XCTAssertEqual(sessions.first?.isLive, true)
     }
 
+
+    func testAdminUserStatusWriteUsesConfirmedActionBody() async throws {
+        let client = makeClient(responseBody: """
+        { "ok": true, "data": { "success": true, "message": "User updated", "operationId": "op-user" } }
+        """)
+
+        let result = try await client.setAdminUserEnabled(userId: 42, isEnabled: false)
+
+        XCTAssertEqual(MockURLProtocol.lastRequest?.url?.path, "/api/actions/users/toggleUserStatus")
+        let body = try XCTUnwrap(decodedRequestBody())
+        XCTAssertEqual(body["userId"] as? Int, 42)
+        XCTAssertEqual(body["isEnabled"] as? Bool, false)
+        XCTAssertEqual(body["enabled"] as? Bool, false)
+        XCTAssertEqual(result.success, true)
+        XCTAssertEqual(result.operationId, "op-user")
+    }
+
+    func testAdminKeyStatusWriteUsesConfirmedActionBody() async throws {
+        let client = makeClient(responseBody: """
+        { "ok": true, "data": { "success": true, "message": "Key updated", "operationId": "op-key" } }
+        """)
+
+        let result = try await client.setAdminKeyEnabled(keyId: 7, isEnabled: true)
+
+        XCTAssertEqual(MockURLProtocol.lastRequest?.url?.path, "/api/actions/users/toggleKeyStatus")
+        let body = try XCTUnwrap(decodedRequestBody())
+        XCTAssertEqual(body["keyId"] as? Int, 7)
+        XCTAssertEqual(body["isEnabled"] as? Bool, true)
+        XCTAssertEqual(body["enabled"] as? Bool, true)
+        XCTAssertEqual(result.success, true)
+        XCTAssertEqual(result.operationId, "op-key")
+    }
+
+    func testProviderCircuitResetUsesProviderActionBody() async throws {
+        let client = makeClient(responseBody: """
+        { "ok": true, "data": { "success": true, "message": "Circuit reset", "operationId": "op-provider" } }
+        """)
+
+        let result = try await client.resetProviderCircuit(providerId: 98)
+
+        XCTAssertEqual(MockURLProtocol.lastRequest?.url?.path, "/api/actions/providers/resetProviderCircuit")
+        let body = try XCTUnwrap(decodedRequestBody())
+        XCTAssertEqual(body["providerId"] as? Int, 98)
+        XCTAssertEqual(result.success, true)
+        XCTAssertEqual(result.operationId, "op-provider")
+    }
+
     private func makeClient(responseBody: String, statusCode: Int = 200) -> APIClient {
         MockURLProtocol.statusCode = statusCode
         MockURLProtocol.responseData = Data(responseBody.utf8)

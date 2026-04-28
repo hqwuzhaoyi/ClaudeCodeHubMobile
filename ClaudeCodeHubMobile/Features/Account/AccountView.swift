@@ -30,6 +30,24 @@ struct AccountView: View {
                         .foregroundStyle(.secondary)
                 }
 
+                Section("Release Readiness") {
+                    ReleaseChecklistRow(
+                        title: "Credential storage",
+                        detail: "Raw keys are discarded after sign-in; restored sessions depend on server cookies.",
+                        systemImage: "key.slash"
+                    )
+                    ReleaseChecklistRow(
+                        title: "Signing hygiene",
+                        detail: "Keep personal DEVELOPMENT_TEAM values out of commits; configure signing locally in Xcode.",
+                        systemImage: "person.badge.shield.checkmark"
+                    )
+                    ReleaseChecklistRow(
+                        title: "Preflight",
+                        detail: "Run swift test and a generic iOS Simulator build before archiving or TestFlight.",
+                        systemImage: "checklist.checked"
+                    )
+                }
+
                 Section {
                     Button(role: .destructive) {
                         isConfirmingSignOut = true
@@ -48,6 +66,28 @@ struct AccountView: View {
                 Text("This clears the stored server URL and cookies for the current server.")
             }
         }
+    }
+}
+
+private struct ReleaseChecklistRow: View {
+    let title: String
+    let detail: String
+    let systemImage: String
+
+    var body: some View {
+        Label {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                Text(detail)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        } icon: {
+            Image(systemName: systemImage)
+                .foregroundStyle(.blue)
+        }
+        .accessibilityElement(children: .combine)
     }
 }
 

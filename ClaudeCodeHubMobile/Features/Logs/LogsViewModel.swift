@@ -6,6 +6,7 @@ final class LogsViewModel: ObservableObject {
     @Published private(set) var logs: [UsageLog] = []
     @Published private(set) var activeSessions: [ActiveSession] = []
     @Published private(set) var adminOverview: StatsSummary?
+    @Published private(set) var opsAlerts: [OpsAlert] = []
     @Published private(set) var availableModels: [String] = []
     @Published private(set) var availableEndpoints: [String] = []
     @Published private(set) var serverTimeZone: String?
@@ -94,10 +95,17 @@ final class LogsViewModel: ObservableObject {
                 async let modelsRequest = client.getDashboardAvailableModels()
                 async let activeSessionsRequest = client.getActiveSessions()
                 async let overviewRequest = client.getDashboardOverview()
+                async let adminProvidersRequest = client.getAdminProviders()
+                async let providerHealthRequest = client.getProvidersHealthStatus()
                 response = try await logsRequest
                 availableModels = try await modelsRequest
                 activeSessions = sortedActiveSessions((try? await activeSessionsRequest) ?? activeSessions)
                 adminOverview = (try? await overviewRequest) ?? adminOverview
+                let circuitBreakerProviders = OpsAlertEngine.circuitBreakerProviders(
+                    providers: (try? await adminProvidersRequest) ?? [],
+                    healthStatuses: (try? await providerHealthRequest) ?? []
+                )
+                opsAlerts = OpsAlertEngine.alerts(stats: adminOverview, circuitBreakerProviders: circuitBreakerProviders)
                 availableEndpoints = Array(Set(response.records.compactMap(\.endpoint))).sorted()
             } else {
                 async let logsRequest = client.getUsageLogs(limit: pageSize, offset: 0)
@@ -108,6 +116,7 @@ final class LogsViewModel: ObservableObject {
                 availableEndpoints = try await endpointsRequest
                 activeSessions = []
                 adminOverview = nil
+                opsAlerts = []
             }
 
             let sortedRecords = sorted(response.records)

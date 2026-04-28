@@ -757,6 +757,161 @@ struct AdminProvider: Decodable, Equatable, Identifiable {
     }
 }
 
+struct AdminWriteResult: Decodable, Equatable {
+    let success: Bool
+    let message: String?
+    let operationId: String?
+    let undoToken: String?
+
+    init(success: Bool = true, message: String? = nil, operationId: String? = nil, undoToken: String? = nil) {
+        self.success = success
+        self.message = message
+        self.operationId = operationId
+        self.undoToken = undoToken
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DynamicCodingKey.self)
+        let explicitSuccess = container.decodeBool(forPossibleKeys: ["success", "ok", "updated", "reset"])
+        let error = container.decodeString(forPossibleKeys: ["error", "errorMessage"])
+        success = explicitSuccess ?? (error == nil)
+        message = container.decodeString(forPossibleKeys: ["message", "msg", "description", "error", "errorMessage"])
+        operationId = container.decodeString(forPossibleKeys: ["operationId", "operation_id", "id"])
+        undoToken = container.decodeString(forPossibleKeys: ["undoToken", "undo_token"])
+    }
+}
+
+enum OpsAlertSeverity: String, Comparable {
+    case info
+    case warning
+    case critical
+
+    private var rank: Int {
+        switch self {
+        case .info: return 0
+        case .warning: return 1
+        case .critical: return 2
+        }
+    }
+
+    static func < (left: OpsAlertSeverity, right: OpsAlertSeverity) -> Bool {
+        left.rank < right.rank
+    }
+}
+
+enum OpsAlertKind: String {
+    case errorRate
+    case latency
+    case costSpike
+    case providerCircuit
+}
+
+struct OpsAlert: Equatable, Identifiable {
+    let kind: OpsAlertKind
+    let severity: OpsAlertSeverity
+    let title: String
+    let message: String
+    let recommendedAction: String
+
+    var id: String { "\(kind.rawValue)-\(title)-\(message)" }
+}
+
+enum OpsAlertEngine {
+    static func circuitBreakerProviders(providers: [AdminProvider], healthStatuses: [ProviderHealthStatus]) -> [CircuitBreakerProvider] {
+        let providersByID = Dictionary(uniqueKeysWithValues: providers.map { ($0.id, $0) })
+        return healthStatuses
+            .filter(\.isCircuitOpen)
+            .compactMap { health in
+                providersByID[health.providerId].map { CircuitBreakerProvider(provider: $0, health: health) }
+            }
+            .sorted { left, right in
+                if left.health.circuitState != right.health.circuitState {
+                    return left.health.circuitState < right.health.circuitState
+                }
+                return left.provider.name.localizedCaseInsensitiveCompare(right.provider.name) == .orderedAscending
+            }
+    }
+
+    static func alerts(stats: StatsSummary?, circuitBreakerProviders: [CircuitBreakerProvider]) -> [OpsAlert] {
+        var alerts: [OpsAlert] = []
+
+        if let errorRate = stats?.todayErrorRate, errorRate >= 5 {
+            let severity: OpsAlertSeverity = errorRate >= 15 ? .critical : .warning
+            alerts.append(
+                OpsAlert(
+                    kind: .errorRate,
+                    severity: severity,
+                    title: severity == .critical ? "Critical error rate" : "Elevated error rate",
+                    message: "Today error rate is \(percent(errorRate)).",
+                    recommendedAction: "Open Logs, filter failed records, and check affected users/providers."
+                )
+            )
+        }
+
+        if let latency = stats?.avgResponseTimeMs, latency >= 8_000 {
+            let severity: OpsAlertSeverity = latency >= 15_000 ? .critical : .warning
+            alerts.append(
+                OpsAlert(
+                    kind: .latency,
+                    severity: severity,
+                    title: severity == .critical ? "Critical latency" : "Elevated latency",
+                    message: "Average response time is \(AppFormatters.duration(milliseconds: latency)).",
+                    recommendedAction: "Check active sessions, provider health, and slow models before release."
+                )
+            )
+        }
+
+        if let currentCost = stats?.totalCost,
+           let previousCost = stats?.yesterdaySamePeriodCost,
+           previousCost > 0 {
+            let delta = ((currentCost - previousCost) / previousCost) * 100
+            if delta >= 50 {
+                let severity: OpsAlertSeverity = delta >= 100 ? .critical : .warning
+                alerts.append(
+                    OpsAlert(
+                        kind: .costSpike,
+                        severity: severity,
+                        title: severity == .critical ? "Critical cost spike" : "Cost spike",
+                        message: "Today cost is \(signedPercent(delta)) vs yesterday same period.",
+                        recommendedAction: "Review rankings and usage search for runaway users, keys, or providers."
+                    )
+                )
+            }
+        }
+
+        if !circuitBreakerProviders.isEmpty {
+            let openCount = circuitBreakerProviders.filter {
+                $0.health.circuitState.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "open"
+            }.count
+            let severity: OpsAlertSeverity = openCount > 0 ? .critical : .warning
+            let count = circuitBreakerProviders.count
+            alerts.append(
+                OpsAlert(
+                    kind: .providerCircuit,
+                    severity: severity,
+                    title: count == 1 ? "Provider circuit alert" : "\(count) provider circuit alerts",
+                    message: "\(count) provider \(count == 1 ? "circuit is" : "circuits are") open or half-open.",
+                    recommendedAction: "Inspect Providers and reset only after confirming upstream recovery."
+                )
+            )
+        }
+
+        return alerts.sorted {
+            if $0.severity != $1.severity { return $0.severity > $1.severity }
+            return $0.title < $1.title
+        }
+    }
+
+    private static func percent(_ value: Double) -> String {
+        "\(String(format: "%.1f", value))%"
+    }
+
+    private static func signedPercent(_ value: Double) -> String {
+        let prefix = value >= 0 ? "+" : ""
+        return "\(prefix)\(String(format: "%.0f", value))%"
+    }
+}
+
 private extension String {
     var nilIfBlank: String? {
         let trimmed = trimmingCharacters(in: .whitespacesAndNewlines)

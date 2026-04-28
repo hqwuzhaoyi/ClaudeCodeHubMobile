@@ -19,6 +19,14 @@ struct AdminUsersView: View {
                     .listRowSeparator(.hidden)
                 }
 
+                if let writeMessage = viewModel.writeMessage {
+                    Section {
+                        Label(writeMessage, systemImage: "checkmark.seal.fill")
+                            .font(.footnote)
+                            .foregroundStyle(.green)
+                    }
+                }
+
                 Section {
                     HStack {
                         SummaryMetric(label: "Users", value: AppFormatters.integer(viewModel.users.count), icon: "person.2")
@@ -36,7 +44,12 @@ struct AdminUsersView: View {
                         ContentUnavailableView("No users found", systemImage: "person.crop.circle.badge.questionmark", description: Text("Try changing the search or filter."))
                     } else {
                         ForEach(viewModel.filteredUsers) { user in
-                            AdminUserRow(user: user)
+                            AdminUserRow(
+                                user: user,
+                                isWriting: viewModel.isWriting,
+                                onToggleUser: { viewModel.prepareUserToggle(user) },
+                                onToggleKey: { key in viewModel.prepareKeyToggle(key, owner: user) }
+                            )
                         }
                     }
                 } header: {
@@ -66,12 +79,28 @@ struct AdminUsersView: View {
             }
             .refreshable { await viewModel.refresh() }
             .task { await viewModel.loadIfNeeded() }
+            .alert(item: $viewModel.pendingWrite) { confirmation in
+                let confirmButton: Alert.Button = confirmation.isDestructive
+                    ? .destructive(Text(confirmation.confirmTitle)) { Task { await viewModel.commitPendingWrite() } }
+                    : .default(Text(confirmation.confirmTitle)) { Task { await viewModel.commitPendingWrite() } }
+                return Alert(
+                    title: Text(confirmation.title),
+                    message: Text("\(confirmation.message)\n\nBefore: \(confirmation.before)\nAfter: \(confirmation.after)"),
+                    primaryButton: confirmButton,
+                    secondaryButton: .cancel {
+                        viewModel.cancelPendingWrite()
+                    }
+                )
+            }
         }
     }
 }
 
 private struct AdminUserRow: View {
     let user: AdminUser
+    let isWriting: Bool
+    let onToggleUser: () -> Void
+    let onToggleKey: (AdminAPIKey) -> Void
     @State private var isExpanded = false
 
     var body: some View {
@@ -121,6 +150,14 @@ private struct AdminUserRow: View {
                 if let rpm = user.rpm {
                     Label("\(rpm) RPM", systemImage: "gauge.with.dots.needle.bottom.50percent")
                 }
+                Spacer(minLength: 8)
+                Button(role: user.isEnabled ? .destructive : nil) {
+                    onToggleUser()
+                } label: {
+                    Label(user.isEnabled ? "Disable" : "Enable", systemImage: user.isEnabled ? "pause.circle" : "play.circle")
+                }
+                .buttonStyle(.borderless)
+                .disabled(isWriting)
             }
             .font(.caption)
             .foregroundStyle(.secondary)
@@ -133,7 +170,9 @@ private struct AdminUserRow: View {
                 } else {
                     VStack(alignment: .leading, spacing: 8) {
                         ForEach(user.keys) { key in
-                            AdminKeyRow(key: key)
+                            AdminKeyRow(key: key, isWriting: isWriting) {
+                                onToggleKey(key)
+                            }
                         }
                     }
                     .transition(.opacity.combined(with: .move(edge: .top)))
@@ -146,6 +185,8 @@ private struct AdminUserRow: View {
 
 private struct AdminKeyRow: View {
     let key: AdminAPIKey
+    let isWriting: Bool
+    let onToggleKey: () -> Void
     @State private var copied = false
 
     var body: some View {
@@ -155,6 +196,13 @@ private struct AdminKeyRow: View {
                 Text(key.name)
                     .font(.subheadline.weight(.medium))
                 Spacer()
+                Button(role: key.isEnabled ? .destructive : nil) {
+                    onToggleKey()
+                } label: {
+                    Text(key.isEnabled ? "Disable" : "Enable")
+                }
+                .buttonStyle(.borderless)
+                .disabled(isWriting)
                 Text(AppFormatters.integer(key.todayCallCount))
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(.secondary)

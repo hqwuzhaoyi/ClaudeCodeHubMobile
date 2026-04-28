@@ -18,6 +18,14 @@ struct AdminProvidersView: View {
                     .listRowSeparator(.hidden)
                 }
 
+                if let writeMessage = viewModel.writeMessage {
+                    Section {
+                        Label(writeMessage, systemImage: "checkmark.seal.fill")
+                            .font(.footnote)
+                            .foregroundStyle(.green)
+                    }
+                }
+
                 Section {
                     Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 10) {
                         GridRow {
@@ -26,7 +34,7 @@ struct AdminProvidersView: View {
                         }
                         GridRow {
                             ProviderMetric(label: "Today Cost", value: AppFormatters.money(viewModel.todayCost), icon: "creditcard")
-                            ProviderMetric(label: "Types", value: AppFormatters.integer(viewModel.providerTypes.count), icon: "square.stack.3d.up")
+                            ProviderMetric(label: "Open Circuits", value: AppFormatters.integer(viewModel.openCircuitProviderIds.count), icon: "bolt.trianglebadge.exclamationmark")
                         }
                     }
 
@@ -39,7 +47,7 @@ struct AdminProvidersView: View {
                 } header: {
                     Text("Provider Management")
                 } footer: {
-                    Text("Provider editing is intentionally kept read-only in this mobile pass; this page surfaces routing, limits, health-adjacent usage, and search first.")
+                    Text("Provider routing details stay read-only in this mobile pass; only recovered open/half-open circuits can be reset after confirmation.")
                 }
 
                 Section {
@@ -47,7 +55,14 @@ struct AdminProvidersView: View {
                         ContentUnavailableView("No providers found", systemImage: "server.rack", description: Text("Try changing the search or state filter."))
                     } else {
                         ForEach(viewModel.filteredProviders) { provider in
-                            AdminProviderRow(provider: provider)
+                            AdminProviderRow(
+                                provider: provider,
+                                health: viewModel.circuitStatusByProviderId[provider.id],
+                                isWriting: viewModel.isWriting,
+                                onResetCircuit: { health in
+                                    viewModel.prepareCircuitReset(provider: provider, health: health)
+                                }
+                            )
                         }
                     }
                 } header: {
@@ -77,12 +92,27 @@ struct AdminProvidersView: View {
             }
             .refreshable { await viewModel.refresh() }
             .task { await viewModel.loadIfNeeded() }
+            .alert(item: $viewModel.pendingWrite) { confirmation in
+                Alert(
+                    title: Text(confirmation.title),
+                    message: Text("\(confirmation.message)\n\nBefore: \(confirmation.before)\nAfter: \(confirmation.after)"),
+                    primaryButton: .destructive(Text(confirmation.confirmTitle)) {
+                        Task { await viewModel.commitPendingWrite() }
+                    },
+                    secondaryButton: .cancel {
+                        viewModel.cancelPendingWrite()
+                    }
+                )
+            }
         }
     }
 }
 
 private struct AdminProviderRow: View {
     let provider: AdminProvider
+    let health: ProviderHealthStatus?
+    let isWriting: Bool
+    let onResetCircuit: (ProviderHealthStatus) -> Void
     @State private var isExpanded = false
 
     var body: some View {
@@ -126,12 +156,26 @@ private struct AdminProviderRow: View {
                 if let providerType = provider.providerType {
                     Label(providerType, systemImage: "square.stack.3d.up")
                 }
+                Spacer(minLength: 8)
+                if let health, health.isCircuitOpen {
+                    Button(role: .destructive) {
+                        onResetCircuit(health)
+                    } label: {
+                        Label("Reset circuit", systemImage: "arrow.counterclockwise.circle")
+                    }
+                    .buttonStyle(.borderless)
+                    .disabled(isWriting)
+                }
             }
             .font(.caption)
             .foregroundStyle(.secondary)
 
             if isExpanded {
                 VStack(alignment: .leading, spacing: 7) {
+                    if let health {
+                        Label("\(health.displayState) circuit · \(health.failureCount) failures", systemImage: health.isCircuitOpen ? "bolt.trianglebadge.exclamationmark" : "checkmark.seal")
+                            .foregroundStyle(health.isCircuitOpen ? .orange : .secondary)
+                    }
                     if let url = provider.url {
                         Label(url, systemImage: "link")
                             .lineLimit(1)

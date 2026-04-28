@@ -124,6 +124,27 @@ final class APIClient {
         .sorted { $0.providerId < $1.providerId }
     }
 
+    func setAdminUserEnabled(userId: Int, isEnabled: Bool) async throws -> AdminWriteResult {
+        try await adminWrite(
+            "/api/actions/users/toggleUserStatus",
+            body: AdminStatusWriteRequest(userId: userId, keyId: nil, providerId: nil, isEnabled: isEnabled)
+        )
+    }
+
+    func setAdminKeyEnabled(keyId: Int, isEnabled: Bool) async throws -> AdminWriteResult {
+        try await adminWrite(
+            "/api/actions/users/toggleKeyStatus",
+            body: AdminStatusWriteRequest(userId: nil, keyId: keyId, providerId: nil, isEnabled: isEnabled)
+        )
+    }
+
+    func resetProviderCircuit(providerId: Int) async throws -> AdminWriteResult {
+        try await adminWrite(
+            "/api/actions/providers/resetProviderCircuit",
+            body: AdminStatusWriteRequest(userId: nil, keyId: nil, providerId: providerId, isEnabled: nil)
+        )
+    }
+
     func validateSession() async throws {
         _ = try await postData("/api/actions/my-usage/getMyQuota", body: EmptyBody())
     }
@@ -157,6 +178,15 @@ final class APIClient {
     private func get<Response: Decodable>(_ path: String) async throws -> Response {
         let data = try await requestData(path, method: "GET", body: Optional<EmptyBody>.none)
         return try decodeResponse(data)
+    }
+
+    private func adminWrite<Body: Encodable>(_ path: String, body: Body) async throws -> AdminWriteResult {
+        let data = try await postData(path, body: body)
+        guard !data.isEmpty else {
+            return AdminWriteResult(success: true, message: "Admin write completed.", operationId: nil, undoToken: nil)
+        }
+        let response: FlexibleEnvelope<AdminWriteResult> = try decodeResponse(data)
+        return response.value
     }
 
     private func decodeResponse<Response: Decodable>(_ data: Data) throws -> Response {
@@ -231,6 +261,24 @@ private struct DashboardUsageLogsRequest: Encodable {
         self.userId = filter?.userId
         self.providerId = filter?.providerId
         self.sessionId = filter?.sessionId
+    }
+}
+
+private struct AdminStatusWriteRequest: Encodable {
+    let userId: Int?
+    let keyId: Int?
+    let providerId: Int?
+    let isEnabled: Bool?
+    let enabled: Bool?
+    let confirm: Bool
+
+    init(userId: Int?, keyId: Int?, providerId: Int?, isEnabled: Bool?) {
+        self.userId = userId
+        self.keyId = keyId
+        self.providerId = providerId
+        self.isEnabled = isEnabled
+        self.enabled = isEnabled
+        self.confirm = true
     }
 }
 

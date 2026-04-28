@@ -6,6 +6,7 @@ final class OverviewViewModel: ObservableObject {
     @Published private(set) var stats: StatsSummary?
     @Published private(set) var activeSessions: [ActiveSession] = []
     @Published private(set) var circuitBreakerProviders: [CircuitBreakerProvider] = []
+    @Published private(set) var opsAlerts: [OpsAlert] = []
     @Published private(set) var userLeaderboard: [DashboardLeaderboardEntry] = []
     @Published private(set) var providerLeaderboard: [DashboardLeaderboardEntry] = []
     @Published private(set) var modelLeaderboard: [DashboardLeaderboardEntry] = []
@@ -60,10 +61,11 @@ final class OverviewViewModel: ObservableObject {
                 userLeaderboard = (try? await usersRequest) ?? []
                 providerLeaderboard = (try? await providersRequest) ?? []
                 modelLeaderboard = (try? await modelsLeaderboardRequest) ?? []
-                circuitBreakerProviders = openCircuitProviders(
+                circuitBreakerProviders = OpsAlertEngine.circuitBreakerProviders(
                     providers: (try? await adminProvidersRequest) ?? [],
                     healthStatuses: (try? await providerHealthRequest) ?? []
                 )
+                opsAlerts = OpsAlertEngine.alerts(stats: stats, circuitBreakerProviders: circuitBreakerProviders)
                 availableModels = []
                 availableEndpoints = []
             } else {
@@ -78,6 +80,7 @@ final class OverviewViewModel: ObservableObject {
                 availableEndpoints = try await endpointsRequest
                 activeSessions = []
                 circuitBreakerProviders = []
+                opsAlerts = []
                 userLeaderboard = []
                 providerLeaderboard = []
                 modelLeaderboard = []
@@ -95,18 +98,4 @@ final class OverviewViewModel: ObservableObject {
         }
     }
 
-    private func openCircuitProviders(providers: [AdminProvider], healthStatuses: [ProviderHealthStatus]) -> [CircuitBreakerProvider] {
-        let providersByID = Dictionary(uniqueKeysWithValues: providers.map { ($0.id, $0) })
-        return healthStatuses
-            .filter(\.isCircuitOpen)
-            .compactMap { health in
-                providersByID[health.providerId].map { CircuitBreakerProvider(provider: $0, health: health) }
-            }
-            .sorted { left, right in
-                if left.health.circuitState != right.health.circuitState {
-                    return left.health.circuitState < right.health.circuitState
-                }
-                return left.provider.name.localizedCaseInsensitiveCompare(right.provider.name) == .orderedAscending
-            }
-    }
 }

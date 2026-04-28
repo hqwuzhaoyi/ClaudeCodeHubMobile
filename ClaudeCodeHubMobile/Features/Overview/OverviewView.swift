@@ -66,6 +66,8 @@ private struct AdminDashboardHome: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
+            OpsAlertsCard(alerts: viewModel.opsAlerts)
+
             AdminBentoMetrics(stats: viewModel.stats)
 
             LiveSessionsHomeCard(sessions: viewModel.visibleActiveSessions, totalCount: viewModel.activeSessions.count)
@@ -76,6 +78,81 @@ private struct AdminDashboardHome: View {
             LeaderboardMiniCard(title: "Provider Rankings", icon: "point.3.connected.trianglepath.dotted", accent: .purple, entries: viewModel.providerLeaderboard)
             LeaderboardMiniCard(title: "Model Rankings", icon: "cpu", accent: .green, entries: viewModel.modelLeaderboard)
         }
+    }
+}
+
+private struct OpsAlertsCard: View {
+    let alerts: [OpsAlert]
+
+    var body: some View {
+        Card {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Label("Operational Alerts", systemImage: "bell.badge")
+                        .font(.headline)
+                    Spacer()
+                    Text(alerts.isEmpty ? "Clear" : "\(alerts.count)")
+                        .font(.caption.weight(.semibold))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background((alerts.isEmpty ? Color.green : highestSeverityColor).opacity(0.14), in: Capsule())
+                        .foregroundStyle(alerts.isEmpty ? .green : highestSeverityColor)
+                }
+
+                if alerts.isEmpty {
+                    HStack(spacing: 10) {
+                        Image(systemName: "checkmark.seal.fill")
+                            .foregroundStyle(.green)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("No threshold alerts")
+                                .font(.subheadline.weight(.medium))
+                            Text("Error rate, latency, spend, and provider circuits are within configured mobile guardrails.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                } else {
+                    ForEach(alerts.prefix(4)) { alert in
+                        OpsAlertRow(alert: alert)
+                    }
+                    if alerts.count > 4 {
+                        Text("+ \(alerts.count - 4) more alerts")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
+    }
+
+    private var highestSeverityColor: Color {
+        alerts.contains { $0.severity == .critical } ? .red : .orange
+    }
+}
+
+private struct OpsAlertRow: View {
+    let alert: OpsAlert
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: alert.severity == .critical ? "exclamationmark.triangle.fill" : "exclamationmark.circle.fill")
+                .foregroundStyle(color)
+                .frame(width: 18)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(alert.title)
+                    .font(.subheadline.weight(.semibold))
+                Text(alert.message)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text(alert.recommendedAction)
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+        }
+    }
+
+    private var color: Color {
+        alert.severity == .critical ? .red : .orange
     }
 }
 

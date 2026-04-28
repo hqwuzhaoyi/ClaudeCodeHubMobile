@@ -25,21 +25,23 @@ The app is no longer an empty scaffold. It includes a working SwiftUI implementa
   - average response time
   - active sessions
   - daily leaderboards
-- Circuit breaker panel showing providers currently in `open` or `half-open` state.
-- Logs page with live monitoring, active sessions, server-backed usage-record search, and auto-refresh.
+- Circuit breaker panel showing providers currently in `open` or `half-open` state, plus operational alerts for error-rate, latency, spend, and provider health thresholds.
+- Logs page with live monitoring, active sessions, operational alert summaries, server-backed usage-record search, and auto-refresh.
 - Full rankings page for users, providers, and models across daily/weekly/monthly/all-time periods.
-- User management inspection:
+- User management inspection and safe writes:
   - searchable users
   - enabled/disabled state
   - provider groups/tags
   - keys and today usage
   - copy token action for copyable keys without displaying the full token inline
-- Provider management inspection:
+  - confirmation-gated user/key enable-disable writes with refresh-after-write feedback
+- Provider management inspection and safe operations:
   - searchable providers
   - enabled/disabled filter
   - provider type/group
   - priority/weight/cost multiplier
   - today calls/cost and last model
+  - confirmation-gated provider circuit reset for recovered open/half-open circuits
 
 ## Project Structure
 
@@ -111,4 +113,4 @@ xcodebuild -project ClaudeCodeHubMobile.xcodeproj \
 3. **Device-ready release hardening**
    - Move any raw-key persistence to Keychain if persistence is needed beyond cookies.
    - Polish iPhone/iPad layouts, empty states, and accessibility labels.
-   - Prepare signing, archive, TestFlight/manual distribution notes, and release tagging discipline.
+   - Prepare signing, archive, TestFlight/manual distribution notes, and release tagging discipline. See `docs/release/preflight.md` for the current checklist.

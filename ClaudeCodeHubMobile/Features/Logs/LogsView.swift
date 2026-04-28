@@ -164,6 +164,28 @@ private struct AdminMonitoringSection: View {
         Section {
             AdminKPIGrid(overview: viewModel.adminOverview, activeSessions: viewModel.activeSessions)
 
+            if !viewModel.opsAlerts.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(viewModel.opsAlerts.prefix(3)) { alert in
+                        HStack(alignment: .top, spacing: 8) {
+                            Image(systemName: alert.severity == .critical ? "exclamationmark.triangle.fill" : "exclamationmark.circle.fill")
+                                .foregroundStyle(alert.severity == .critical ? .red : .orange)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(alert.title)
+                                    .font(.caption.weight(.semibold))
+                                Text(alert.message)
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+                .padding(10)
+                .background(Color.orange.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel(alertAccessibilitySummary)
+            }
+
             Toggle(isOn: $viewModel.autoRefreshEnabled) {
                 Label("Auto refresh every 5s", systemImage: viewModel.autoRefreshEnabled ? "dot.radiowaves.left.and.right" : "pause.circle")
             }
@@ -192,6 +214,10 @@ private struct AdminMonitoringSection: View {
                 Text("\(viewModel.visibleActiveSessions.count) of \(viewModel.activeSessions.count) recent sessions shown.")
             }
         }
+    }
+
+    private var alertAccessibilitySummary: String {
+        "Operational alerts: \(viewModel.opsAlerts.map(\.title).joined(separator: ", "))"
     }
 }
 

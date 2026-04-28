@@ -1,6 +1,12 @@
 # ClaudeCodeHubMobile
 
-Native SwiftUI iOS client for Claude Code Hub. It provides a mobile-friendly way to sign in to an existing Claude Code Hub deployment, inspect personal usage, and operate the admin monitoring surfaces without opening the web dashboard.
+Native SwiftUI iOS client for [Claude Code Hub](https://github.com/ding113/claude-code-hub). It provides a mobile-friendly way to sign in to an existing Claude Code Hub deployment, inspect personal usage, and operate the admin monitoring surfaces without opening the web dashboard.
+
+<p align="center">
+<img width="15%" alt="image" src="https://github.com/user-attachments/assets/492b4fa6-c148-4e68-80da-c72633af33ac" />
+<img  width="15%"  alt="image" src="https://github.com/user-attachments/assets/42413db8-86ba-4510-a7e1-1717d021d1b3" />
+<img  width="15%"  alt="image" src="https://github.com/user-attachments/assets/78f1b16f-e014-478d-93e3-622e80e57a7d" />
+</p>
 
 ## Current Status
 

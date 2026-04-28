@@ -90,7 +90,7 @@ Requires a valid admin-capable key in the environment. Do not print or commit th
 
 ```bash
 zsh -ic 'source ~/.zshrc >/dev/null 2>&1 || true; \
-  CCH_BASE_URL="https://cch.wuzhaoyi.top:8443" \
+  CCH_BASE_URL="https://cch.com" \
   CCH_KEY="$CCH_KEY" \
   swift test --filter LiveServerIntegrationTests'
 ```
